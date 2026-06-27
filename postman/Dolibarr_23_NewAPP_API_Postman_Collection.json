@@ -1,0 +1,2168 @@
+{
+  "info": {
+    "name": "Dolibarr 23 - API Postman Collection pour NewAPP",
+    "_postman_id": "e2a999c4-cc80-47b7-8b2c-6ce808992adf",
+    "description": "Collection Postman pour tester l'API REST Dolibarr v23 en local et préparer la liaison NewAPP. Base URL par défaut: http://localhost/dolibarr-23.0.3/htdocs/api/index.php. Renseigner la variable apiKey avec la clé API de l'utilisateur Dolibarr. Les routes exactes disponibles peuvent varier selon les modules activés et les droits utilisateur; vérifier dans l'API Explorer: {{baseUrl}}/explorer/.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost/dolibarr-23.0.3/htdocs/api/index.php"
+    },
+    {
+      "key": "apiKey",
+      "value": "zj9Yr7J9Cr3wre2QBL6K9dW6hlINTs09"
+    },
+    {
+      "key": "username",
+      "value": "dolibarr"
+    },
+    {
+      "key": "password",
+      "value": "dolibarr"
+    },
+    {
+      "key": "entity",
+      "value": "1"
+    },
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "userLogin",
+      "value": "dolibarr"
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    },
+    {
+      "key": "productRef",
+      "value": "PROD-TEST-001"
+    },
+    {
+      "key": "warehouseId",
+      "value": "1"
+    },
+    {
+      "key": "salaryId",
+      "value": "1"
+    },
+    {
+      "key": "salaryPaymentId",
+      "value": "1"
+    },
+    {
+      "key": "expenseReportId",
+      "value": "1"
+    },
+    {
+      "key": "expenseReportLineId",
+      "value": "1"
+    },
+    {
+      "key": "holidayId",
+      "value": "1"
+    },
+    {
+      "key": "bankAccountId",
+      "value": "1"
+    },
+    {
+      "key": "lastCreatedId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Diagnostic API",
+      "description": "Tests de base: explorer, login API optionnel, status.",
+      "item": [
+        {
+          "name": "GET API Explorer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/explorer/",
+            "description": "Ouvre l'interface Swagger/Explorer de Dolibarr."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/status",
+            "description": "Vérifie que l'API REST répond."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /login - récupérer une clé API",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/login?login={{username}}&password={{password}}&entity={{entity}}",
+            "description": "Optionnel: retourne une clé API si l'API login n'est pas désactivée. Le test copie success.token dans apiKey."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  if (data && data.success && data.success.token) {",
+                  "    pm.collectionVariables.set(\"apiKey\", data.success.token);",
+                  "  }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /login - reset token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/login?login={{username}}&password={{password}}&entity={{entity}}&reset=1",
+            "description": "Optionnel: force la génération d'une nouvelle clé API si l'utilisateur a le droit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  if (data && data.success && data.success.token) {",
+                  "    pm.collectionVariables.set(\"apiKey\", data.success.token);",
+                  "  }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Utilisateurs / Salariés",
+      "description": "Les salariés utilisables par le module salaire sont généralement des utilisateurs internes/employés.",
+      "item": [
+        {
+          "name": "GET /users - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users?limit=100&page=0",
+            "description": "Liste des utilisateurs Dolibarr."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users avec filtre employé",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users?limit=100&page=0&sqlfilters=(t.employee:=:1)",
+            "description": "Exemple de filtre pour récupérer les employés."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Détail d'un utilisateur/salarié."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/login/{login}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/login/{{userLogin}}",
+            "description": "Détail d'un utilisateur par login, si disponible."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /users - créer salarié test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users",
+            "description": "Créer un utilisateur interne qui pourra être utilisé comme salarié.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"salarie_test\",\n  \"lastname\": \"TEST\",\n  \"firstname\": \"Salarie\",\n  \"password\": \"test1234\",\n  \"employee\": 1,\n  \"gender\": \"man\",\n  \"job\": \"Agent tabulation\",\n  \"email\": \"salarie.test@example.com\",\n  \"status\": 1,\n  \"admin\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /users/{id} - modifier salarié",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Modifier un utilisateur Dolibarr et vérifier que NewAPP voit la modification.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lastname\": \"TEST MODIFIE\",\n  \"firstname\": \"Salarie\",\n  \"employee\": 1,\n  \"job\": \"Agent tabulation modifié\",\n  \"status\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /users/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Supprimer un utilisateur test. À éviter sur un vrai salarié."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Salaires",
+      "description": "Module Salaires: créer salaire, lister salaires, payer un salaire.",
+      "item": [
+        {
+          "name": "GET /salaries - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries?limit=100&page=0",
+            "description": "Liste des salaires. Utile pour le dashboard NewAPP."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /salaries/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries/{{salaryId}}",
+            "description": "Détail d'un salaire."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /salaries - créer salaire",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries",
+            "description": "Créer un salaire. Champs obligatoires vus dans l'API: fk_user, label, amount.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fk_user\": \"{{userId}}\",\n  \"label\": \"Salaire Juin 2026 - Test API\",\n  \"amount\": 500000,\n  \"datev\": \"2026-06-30\",\n  \"datep\": \"2026-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /salaries/{id} - modifier salaire",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries/{{salaryId}}",
+            "description": "Modifier un salaire existant.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fk_user\": \"{{userId}}\",\n  \"label\": \"Salaire Juin 2026 - modifié depuis Postman\",\n  \"amount\": 550000,\n  \"datev\": \"2026-06-30\",\n  \"datep\": \"2026-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /salaries/getAllPayments - liste paiements salaire",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries/getAllPayments?limit=100&page=0",
+            "description": "Liste des paiements de salaires. Si la route ne répond pas, vérifier le nom exact dans l'API Explorer."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /salaries/getPayments/{paymentId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries/getPayments/{{salaryPaymentId}}",
+            "description": "Détail d'un paiement salaire. À vérifier dans l'API Explorer."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /salaries/addPayment/{salaryId} - payer salaire",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries/addPayment/{{salaryId}}",
+            "description": "Créer un paiement de salaire. Champs requis: paiementtype, datepaye, chid, amounts. accountid requis si module Banque actif.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paiementtype\": 4,\n  \"datepaye\": \"2026-06-30\",\n  \"chid\": \"VIR-TEST-001\",\n  \"amounts\": {\n    \"{{salaryId}}\": 250000\n  },\n  \"accountid\": \"{{bankAccountId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /salaries/updatePayment/{paymentId}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries/updatePayment/{{salaryPaymentId}}",
+            "description": "Modifier un paiement de salaire. Route à vérifier dans l'API Explorer selon la version.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paiementtype\": 4,\n  \"datepaye\": \"2026-06-30\",\n  \"chid\": \"VIR-TEST-001-MOD\",\n  \"amounts\": {\n    \"{{salaryId}}\": 300000\n  },\n  \"accountid\": \"{{bankAccountId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Produits",
+      "description": "Module Produits: création, recherche, modification.",
+      "item": [
+        {
+          "name": "GET /products - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products?limit=100&page=0",
+            "description": "Liste des produits/services."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /products/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "description": "Détail d'un produit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /products/ref/{ref}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/ref/{{productRef}}",
+            "description": "Recherche par référence, si disponible."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /products - créer produit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "description": "Créer un produit test.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ref\": \"{{productRef}}\",\n  \"label\": \"Produit test API Dolibarr\",\n  \"description\": \"Créé depuis Postman\",\n  \"type\": 0,\n  \"price\": 10000,\n  \"status\": 1,\n  \"status_buy\": 1,\n  \"stock_reel\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /products/{id} - modifier produit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "description": "Modifier un produit et vérifier l'impact côté NewAPP.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Produit test API Dolibarr modifié\",\n  \"description\": \"Modifié depuis Postman\",\n  \"price\": 12000,\n  \"status\": 1,\n  \"status_buy\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /products/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "description": "Supprimer un produit test."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Entrepôts",
+      "description": "Module Stock/Entrepôts.",
+      "item": [
+        {
+          "name": "GET /warehouses - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/warehouses?limit=100&page=0",
+            "description": "Liste des entrepôts."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /warehouses/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/warehouses/{{warehouseId}}",
+            "description": "Détail d'un entrepôt."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /warehouses - créer entrepôt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/warehouses",
+            "description": "Créer un entrepôt test. Le champ obligatoire principal est label.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Entrepôt test API\",\n  \"description\": \"Créé depuis Postman pour NewAPP\",\n  \"lieu\": \"Local\",\n  \"status\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /warehouses/{id} - modifier entrepôt",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/warehouses/{{warehouseId}}",
+            "description": "Modifier un entrepôt.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Entrepôt test API modifié\",\n  \"description\": \"Modifié depuis Postman\",\n  \"lieu\": \"Local modifié\",\n  \"status\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /warehouses/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/warehouses/{{warehouseId}}",
+            "description": "Supprimer un entrepôt test."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Mouvements de stock",
+      "description": "Entrées/sorties stock via API.",
+      "item": [
+        {
+          "name": "GET /stockmovements - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/stockmovements?limit=100&page=0",
+            "description": "Liste des mouvements de stock."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /stockmovements par produit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/stockmovements?limit=100&page=0&sqlfilters=(t.fk_product:=:{{productId}})",
+            "description": "Exemple filtre des mouvements d'un produit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /stockmovements - entrée stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/stockmovements?product_id={{productId}}&warehouse_id={{warehouseId}}&qty=10&type=3&movementlabel=Entree%20stock%20API&price=10000",
+            "description": "Créer une entrée de stock. Champs obligatoires: product_id, warehouse_id, qty."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /stockmovements - sortie stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/stockmovements?product_id={{productId}}&warehouse_id={{warehouseId}}&qty=2&type=2&movementlabel=Sortie%20stock%20API&price=10000",
+            "description": "Créer une sortie de stock. Si le sens est inversé, corriger type depuis l'API Explorer."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Notes de frais",
+      "description": "Module Expense Reports / Notes de frais: fiche + lignes.",
+      "item": [
+        {
+          "name": "GET /expensereports - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports?limit=100&page=0",
+            "description": "Liste des notes de frais."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /expensereports/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}",
+            "description": "Détail d'une note de frais."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /expensereports - créer note de frais",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports",
+            "description": "Créer une note de frais.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fk_user_author\": \"{{userId}}\",\n  \"fk_user_validator\": \"{{userId}}\",\n  \"date_debut\": \"2026-06-01\",\n  \"date_fin\": \"2026-06-30\",\n  \"description\": \"Note de frais test API\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /expensereports/{id} - modifier note de frais",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}",
+            "description": "Modifier les champs généraux d'une note de frais.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Note de frais modifiée depuis Postman\",\n  \"date_debut\": \"2026-06-01\",\n  \"date_fin\": \"2026-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /expensereports/{id}/lines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}/lines",
+            "description": "Liste des lignes d'une note de frais."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /expensereports/{id}/lines - ajouter ligne",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}/lines",
+            "description": "Ajouter une ligne à une note de frais.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-06-25\",\n  \"comments\": \"Taxi déplacement client\",\n  \"total_ht\": 20000,\n  \"total_tva\": 0,\n  \"total_ttc\": 20000,\n  \"fk_c_type_fees\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /expensereports/{id}/lines/{lineid}",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}/lines/{{expenseReportLineId}}",
+            "description": "Modifier une ligne de note de frais.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comments\": \"Taxi déplacement client modifié\",\n  \"total_ht\": 25000,\n  \"total_tva\": 0,\n  \"total_ttc\": 25000,\n  \"fk_c_type_fees\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /expensereports/{id}/lines/{lineid}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}/lines/{{expenseReportLineId}}",
+            "description": "Supprimer une ligne de note de frais."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /expensereports/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports/{{expenseReportId}}",
+            "description": "Supprimer une note de frais test."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Congés",
+      "description": "Module Holiday / Leave Requests.",
+      "item": [
+        {
+          "name": "GET /holidays - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/holidays?limit=100&page=0",
+            "description": "Liste des demandes de congés."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /holidays/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/holidays/{{holidayId}}",
+            "description": "Détail d'une demande de congé."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /holidays - créer demande de congé",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/holidays",
+            "description": "Créer une demande de congé test.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fk_user\": \"{{userId}}\",\n  \"fk_user_create\": \"{{userId}}\",\n  \"date_debut\": \"2026-07-10\",\n  \"date_fin\": \"2026-07-12\",\n  \"halfday\": 0,\n  \"description\": \"Congé test API\",\n  \"fk_type\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  let id = null;",
+                  "  if (typeof data === \"number\" || typeof data === \"string\") { id = data; }",
+                  "  else if (data && data.id) { id = data.id; }",
+                  "  else if (data && data.rowid) { id = data.rowid; }",
+                  "  if (id) { pm.collectionVariables.set(\"lastCreatedId\", String(id)); }",
+                  "} catch (e) {}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /holidays/{id} - modifier congé",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/holidays/{{holidayId}}",
+            "description": "Modifier une demande de congé.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date_debut\": \"2026-07-10\",\n  \"date_fin\": \"2026-07-13\",\n  \"halfday\": 0,\n  \"description\": \"Congé test API modifié\",\n  \"fk_type\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /holidays/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/holidays/{{holidayId}}",
+            "description": "Supprimer une demande de congé test."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Comptes bancaires",
+      "description": "Utile pour payer les salaires si le module Banque est activé.",
+      "item": [
+        {
+          "name": "GET /bankaccounts - liste",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/bankaccounts?limit=100&page=0",
+            "description": "Liste des comptes bancaires."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /bankaccounts/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/bankaccounts/{{bankAccountId}}",
+            "description": "Détail d'un compte bancaire."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Tests NewAPP / Synchronisation",
+      "description": "Requêtes utiles pour prouver que NewAPP est liée à Dolibarr.",
+      "item": [
+        {
+          "name": "Test 1 - salariés visibles depuis Dolibarr",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users?limit=100&page=0&sqlfilters=(t.employee:=:1)",
+            "description": "À utiliser dans NewAPP pour afficher la liste des salariés."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Test 2 - salaires pour dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/salaries?limit=100&page=0",
+            "description": "À utiliser pour calculer salaire par genre et salaire par mois côté NewAPP."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Test 3 - produits importés visibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products?limit=100&page=0",
+            "description": "Après import CSV depuis NewAPP, vérifier que les produits sont visibles dans Dolibarr."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Test 4 - stock après import/mouvement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/stockmovements?limit=100&page=0",
+            "description": "Vérifier que les mouvements de stock apparaissent côté Dolibarr."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Test 5 - notes de frais visibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/expensereports?limit=100&page=0",
+            "description": "Vérifier les notes de frais importées/créées."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Test 6 - congés visibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "DOLAPIKEY",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/holidays?limit=100&page=0",
+            "description": "Vérifier les congés importés/créés."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 2xx\", function () {",
+                  "  pm.response.to.be.success;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
