@@ -1,69 +1,126 @@
+import { useEffect, useState } from 'react'
+import { EmployeeService } from '../../services/dolibarr/EmployeeService'
 import '../../styles/dashboard-page.css'
 
-const stats = [
-  { label: 'Produits suivis', value: '128', status: 'Catalogue' },
-  { label: 'Entrepôts', value: '6', status: 'Stock actif' },
-  { label: 'Mouvements', value: '342', status: 'Ce mois' },
-  { label: 'Utilisateurs', value: '24', status: 'Accès ERP' },
-]
+const DashboardPage = () => {
+  const [salaryByGender, setSalaryByGender] = useState({
+    homme: 0,
+    femme: 0,
+    autre: 0,
+  })
 
-const rows = [
-  ['REF-001', 'Produit standard', 'Disponible', '1 250'],
-  ['REF-014', 'Kit installation', 'Stock faible', '32'],
-  ['REF-087', 'Service maintenance', 'Actif', '-'],
-]
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-function DashboardPage() {
+  const loadDashboard = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const employees = await EmployeeService.getEmployees()
+      const result = EmployeeService.getSalaryAmountByGender(employees)
+
+      setSalaryByGender(result)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDashboard()
+  }, [])
+
+  const total =
+    salaryByGender.homme + salaryByGender.femme + salaryByGender.autre
+
+  const formatAmount = (amount) => {
+    return `${Number(amount || 0).toLocaleString()} Ar`
+  }
+
   return (
     <section className="dashboard-page">
-      <div className="page-title">
+      <div className="dashboard-header">
         <div>
-          <h3>Tableau de bord</h3>
-          <p>Vue synthétique des données synchronisées depuis Dolibarr.</p>
+          <p className="dashboard-kicker">Backoffice</p>
+          <h1>Dashboard</h1>
+          <p>Montant total des salaires par genre.</p>
         </div>
-        <button type="button" className="secondary-button">
-          Exporter
+
+        <button type="button" onClick={loadDashboard} disabled={loading}>
+          Actualiser
         </button>
       </div>
 
-      <div className="stats-grid">
-        {stats.map((stat) => (
-          <article className="stat-card" key={stat.label}>
-            <span>{stat.status}</span>
-            <strong>{stat.value}</strong>
-            <p>{stat.label}</p>
-          </article>
-        ))}
-      </div>
+      {loading && <p className="status-message">Chargement...</p>}
 
-      <section className="panel">
-        <div className="panel-header">
-          <h4>Derniers éléments</h4>
-          <span>Synchronisation récente</span>
-        </div>
+      {error && <p className="error">{error}</p>}
 
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Référence</th>
-                <th>Libellé</th>
-                <th>Statut</th>
-                <th>Quantité</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row[0]}>
-                  {row.map((cell) => (
-                    <td key={cell}>{cell}</td>
-                  ))}
+      {!loading && !error && (
+        <>
+          <div className="dashboard-cards">
+            <div className="dashboard-card">
+              <span>Hommes</span>
+              <strong>{formatAmount(salaryByGender.homme)}</strong>
+            </div>
+
+            <div className="dashboard-card">
+              <span>Femmes</span>
+              <strong>{formatAmount(salaryByGender.femme)}</strong>
+            </div>
+
+            <div className="dashboard-card">
+              <span>Autres / non renseigné</span>
+              <strong>{formatAmount(salaryByGender.autre)}</strong>
+            </div>
+
+            <div className="dashboard-card total">
+              <span>Total général</span>
+              <strong>{formatAmount(total)}</strong>
+            </div>
+          </div>
+
+          <div className="dashboard-table">
+            <h2>Détail par genre</h2>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Genre</th>
+                  <th>Montant total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>Hommes</td>
+                  <td>{formatAmount(salaryByGender.homme)}</td>
+                </tr>
+
+                <tr>
+                  <td>Femmes</td>
+                  <td>{formatAmount(salaryByGender.femme)}</td>
+                </tr>
+
+                <tr>
+                  <td>Autres / non renseigné</td>
+                  <td>{formatAmount(salaryByGender.autre)}</td>
+                </tr>
+
+                <tr>
+                  <td>
+                    <strong>Total général</strong>
+                  </td>
+                  <td>
+                    <strong>{formatAmount(total)}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </section>
   )
 }
