@@ -9,6 +9,7 @@ const FrontofficeLayout = () => {
 
         <nav>
           <Link to="/frontoffice/salaries">Liste des salariés</Link>
+          <Link to="/frontoffice/salaries/create">Créer un salaire</Link>
         </nav>
       </aside>
 

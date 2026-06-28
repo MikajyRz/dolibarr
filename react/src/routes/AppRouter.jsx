@@ -8,6 +8,7 @@ import DashboardPage from '../pages/backoffice/DashboardPage'
 import ProductsPage from '../pages/backoffice/ProductsPage'
 
 import SalariesListPage from '../pages/frontoffice/SalariesListPage'
+import CreateSalaryPaymentPage from '../pages/frontoffice/CreateSalaryPaymentPage'
 
 import { backofficeAuthService } from '../services/backofficeAuthService'
 
@@ -27,6 +28,7 @@ function AppRouter() {
       <Route path="/frontoffice" element={<FrontofficeLayout />}>
         <Route index element={<Navigate to="/frontoffice/salaries" replace />} />
         <Route path="salaries" element={<SalariesListPage />} />
+        <Route path="/frontoffice/salaries/create" element={<CreateSalaryPaymentPage />} />
       </Route>
 
       <Route path="/backoffice" element={<BackofficeLogin />} />
