@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ProductService } from '../../services/dolibarr/ProductService'
+import '../../styles/products-page.css'
 
 function ProductsPage() {
   const [products, setProducts] = useState([])

@@ -1,0 +1,80 @@
+.frontoffice-shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--color-page);
+}
+
+.frontoffice-sidebar {
+  position: sticky;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  flex: 0 0 260px;
+  border-right: 1px solid #cfd6dc;
+  background: var(--color-surface-soft);
+  box-shadow: 2px 0 10px rgba(35, 48, 60, 0.06);
+  padding: 18px 14px;
+}
+
+.frontoffice-sidebar h2 {
+  min-height: 56px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #d8dde2;
+  color: #263c4d;
+  font-size: 1.1rem;
+}
+
+.frontoffice-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.frontoffice-sidebar nav a {
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  color: #304553;
+  font-size: 0.94rem;
+  font-weight: 600;
+  padding: 10px 12px;
+}
+
+.frontoffice-sidebar nav a:hover {
+  background: #edf3f7;
+  color: #1f5f87;
+}
+
+.frontoffice-content {
+  min-width: 0;
+  flex: 1;
+  padding: 18px 22px 32px;
+}
+
+@media (max-width: 900px) {
+  .frontoffice-shell {
+    display: block;
+  }
+
+  .frontoffice-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #cfd6dc;
+  }
+
+  .frontoffice-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .frontoffice-content {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .frontoffice-sidebar nav {
+    grid-template-columns: 1fr;
+  }
+}

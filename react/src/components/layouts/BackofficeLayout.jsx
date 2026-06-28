@@ -1,46 +1,31 @@
-import { NavLink, Outlet } from 'react-router-dom'
-
-const menuItems = [
-  { to: '/backoffice/dashboard', label: 'Dashboard' },
-  { to: '/backoffice/products', label: 'Produits' },
-  { to: '/backoffice/warehouses', label: 'Entrepôts' },
-  { to: '/backoffice/stock-movements', label: 'Mouvements stock' },
-  { to: '/backoffice/users', label: 'Utilisateurs' },
-  { to: '/backoffice/holidays', label: 'Congés' },
-  { to: '/backoffice/expense-reports', label: 'Notes de frais' },
-  { to: '/backoffice/salaries', label: 'Salaires' },
-]
+import { Link, Outlet, useNavigate } from 'react-router-dom'
+import { backofficeAuthService } from '../../services/backofficeAuthService'
+import '../../styles/backoffice-layout.css'
 
 function BackofficeLayout() {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    backofficeAuthService.logout()
+    navigate('/backoffice')
+  }
+
   return (
     <div className="backoffice-shell">
       <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-mark">D</span>
-          <div>
-            <h1>NewApp</h1>
-            <span>Connecteur Dolibarr</span>
-          </div>
-        </div>
+        <h2>NewApp Dolibarr</h2>
 
-        <nav className="sidebar-nav" aria-label="Navigation backoffice">
-          {menuItems.map((item) => (
-            <NavLink key={item.to} to={item.to}>
-              {item.label}
-            </NavLink>
-          ))}
+        <nav>
+          <Link to="/backoffice/dashboard">Dashboard</Link>
+          <Link to="/backoffice/products">Produits</Link>
         </nav>
+
+        <button className="logout-button" onClick={handleLogout}>
+          Déconnexion
+        </button>
       </aside>
 
       <main className="content">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Backoffice</p>
-            <h2>Gestion Dolibarr</h2>
-          </div>
-          <button type="button">Synchroniser</button>
-        </header>
-
         <Outlet />
       </main>
     </div>

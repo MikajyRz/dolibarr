@@ -1,0 +1,143 @@
+.salaries-page {
+  display: grid;
+  gap: 16px;
+}
+
+.salaries-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  padding: 16px;
+}
+
+.salaries-kicker {
+  margin: 0 0 4px;
+  color: #6b7c89;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.salaries-header h1 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.35rem;
+}
+
+.salaries-header p:last-child {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+}
+
+.salaries-filter,
+.salaries-table {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.salaries-filter {
+  padding: 16px;
+}
+
+.filter-title,
+.table-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filter-title {
+  margin-bottom: 14px;
+}
+
+.filter-title h2,
+.table-title h2 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1rem;
+}
+
+.filter-title span,
+.table-title span {
+  color: #6b7c89;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.filter-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.secondary-button {
+  border-color: #b6c0c8;
+  background: #ffffff;
+  color: #2e536d;
+}
+
+.secondary-button:hover:not(:disabled) {
+  border-color: #8396a5;
+  background: #f3f6f8;
+  color: #1f465f;
+}
+
+.salaries-table {
+  overflow: hidden;
+}
+
+.table-title {
+  border-bottom: 1px solid #d8dde2;
+  background: var(--color-surface-soft);
+  padding: 13px 16px;
+}
+
+.status-message {
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-weight: 600;
+  padding: 12px 14px;
+}
+
+@media (max-width: 800px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .salaries-header,
+  .filter-title,
+  .table-title {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .salaries-header button,
+  .filter-actions,
+  .filter-actions button {
+    width: 100%;
+  }
+}

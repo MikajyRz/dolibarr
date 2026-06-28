@@ -3,8 +3,21 @@
 }
 
 :root {
-  color: #263238;
-  background: #edf0f3;
+  --color-page: #edf0f3;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f8f9fa;
+  --color-border: #d3d9df;
+  --color-border-strong: #c4ccd4;
+  --color-text: #263238;
+  --color-heading: #24394a;
+  --color-muted: #60717f;
+  --color-primary: #2f80ad;
+  --color-primary-dark: #256b92;
+  --color-danger: #b42318;
+  --shadow-soft: 0 1px 4px rgba(36, 52, 66, 0.08);
+
+  color: var(--color-text);
+  background: var(--color-page);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
   font-synthesis: none;
@@ -22,7 +35,7 @@ body,
 
 body {
   min-height: 100vh;
-  background: #edf0f3;
+  background: var(--color-page);
 }
 
 button,
@@ -41,7 +54,7 @@ button {
   min-height: 38px;
   border: 1px solid #2f6f93;
   border-radius: 4px;
-  background: #2f80ad;
+  background: var(--color-primary);
   color: #ffffff;
   cursor: pointer;
   font-weight: 600;
@@ -52,234 +65,44 @@ button {
     box-shadow 160ms ease;
 }
 
-button:hover {
-  background: #256b92;
+button:hover:not(:disabled) {
+  background: var(--color-primary-dark);
   border-color: #255f82;
   box-shadow: 0 2px 8px rgba(31, 67, 89, 0.18);
 }
 
-.backoffice-shell {
-  min-height: 100vh;
-  display: flex;
-  background: #edf0f3;
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
-.sidebar {
-  position: sticky;
-  top: 0;
-  width: 260px;
-  height: 100vh;
-  flex: 0 0 260px;
-  border-right: 1px solid #cfd6dc;
-  background: #f8f9fa;
-  box-shadow: 2px 0 10px rgba(35, 48, 60, 0.06);
-  padding: 18px 14px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 56px;
-  border-bottom: 1px solid #d8dde2;
-  padding: 0 6px 16px;
-}
-
-.brand-mark {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--color-border-strong);
   border-radius: 4px;
-  background: #476b86;
-  color: #ffffff;
-  font-size: 1.3rem;
-  font-weight: 800;
-}
-
-.brand h1 {
-  margin: 0;
-  color: #263c4d;
-  font-size: 1.05rem;
-  line-height: 1.15;
-}
-
-.brand span:last-child {
-  display: block;
-  color: #6d7d89;
-  font-size: 0.78rem;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 16px;
-}
-
-.sidebar-nav a {
-  border-left: 3px solid transparent;
-  border-radius: 4px;
-  color: #304553;
-  font-size: 0.94rem;
-  font-weight: 600;
-  padding: 10px 12px;
-}
-
-.sidebar-nav a:hover {
-  background: #edf3f7;
-  color: #1f5f87;
-}
-
-.sidebar-nav a.active {
-  border-left-color: #2f80ad;
-  background: #dfeef6;
-  color: #1d5e86;
-}
-
-.content {
-  min-width: 0;
-  flex: 1;
-  padding: 18px 22px 32px;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 66px;
-  border: 1px solid #d3d9df;
-  border-radius: 6px;
   background: #ffffff;
-  padding: 12px 16px;
-  box-shadow: 0 1px 4px rgba(36, 52, 66, 0.08);
+  color: var(--color-text);
+  padding: 8px 10px;
 }
 
-.eyebrow {
-  margin: 0 0 2px;
-  color: #6b7c89;
-  font-size: 0.76rem;
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(47, 128, 173, 0.14);
+  outline: 0;
+}
+
+label {
+  color: #344c5f;
   font-weight: 700;
-  text-transform: uppercase;
-}
-
-.topbar h2,
-.page-title h3,
-.panel-header h4 {
-  margin: 0;
-  color: #24394a;
-}
-
-.topbar h2 {
-  font-size: 1.25rem;
-}
-
-.dashboard-page {
-  padding-top: 18px;
-}
-
-.page-title {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.page-title h3 {
-  font-size: 1.35rem;
-}
-
-.page-title p {
-  max-width: 680px;
-  margin: 6px 0 0;
-  color: #60717f;
-}
-
-.secondary-button {
-  border-color: #b6c0c8;
-  background: #ffffff;
-  color: #2e536d;
-}
-
-.secondary-button:hover {
-  border-color: #8396a5;
-  background: #f3f6f8;
-  color: #1f465f;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.stat-card,
-.panel {
-  border: 1px solid #d3d9df;
-  border-radius: 6px;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(36, 52, 66, 0.07);
-}
-
-.stat-card {
-  padding: 16px;
-}
-
-.stat-card span {
-  color: #6b7c89;
-  font-size: 0.76rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.stat-card strong {
-  display: block;
-  margin-top: 10px;
-  color: #263c4d;
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.stat-card p {
-  margin: 8px 0 0;
-  color: #536775;
-  font-weight: 600;
-}
-
-.panel {
-  overflow: hidden;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid #d8dde2;
-  background: #f8f9fa;
-  padding: 13px 16px;
-}
-
-.panel-header h4 {
-  font-size: 1rem;
-}
-
-.panel-header span {
-  color: #6b7c89;
-  font-size: 0.86rem;
-  font-weight: 600;
-}
-
-.table-wrap {
-  overflow-x: auto;
 }
 
 table {
   width: 100%;
-  min-width: 620px;
   border-collapse: collapse;
 }
 
@@ -305,47 +128,22 @@ tbody tr:hover {
   background: #f7fbfd;
 }
 
-@media (max-width: 900px) {
-  .backoffice-shell {
-    display: block;
-  }
-
-  .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    border-right: 0;
-    border-bottom: 1px solid #cfd6dc;
-  }
-
-  .sidebar-nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .content {
-    padding: 14px;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.error,
+.form-error {
+  border: 1px solid #f3b4af;
+  border-radius: 4px;
+  background: #fff2f0;
+  color: var(--color-danger);
+  font-weight: 600;
+  padding: 10px 12px;
 }
 
-@media (max-width: 560px) {
-  .topbar,
-  .page-title,
-  .panel-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.table-container,
+.table-wrap {
+  overflow-x: auto;
+}
 
-  .sidebar-nav,
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  button {
-    width: 100%;
-  }
+.table-container table,
+.table-wrap table {
+  min-width: 620px;
 }

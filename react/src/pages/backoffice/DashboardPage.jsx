@@ -1,3 +1,5 @@
+import '../../styles/dashboard-page.css'
+
 const stats = [
   { label: 'Produits suivis', value: '128', status: 'Catalogue' },
   { label: 'Entrepôts', value: '6', status: 'Stock actif' },
