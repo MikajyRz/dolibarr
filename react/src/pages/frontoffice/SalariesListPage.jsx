@@ -1,18 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { EmployeeService } from '../../services/dolibarr/EmployeeService'
 import '../../styles/salaries-list-page.css'
 
 const SalariesListPage = () => {
   const [employees, setEmployees] = useState([])
-
+  const [searchRef, setSearchRef] = useState('')
   const [searchName, setSearchName] = useState('')
-  const [searchEmail, setSearchEmail] = useState('')
+  const [searchGender, setSearchGender] = useState('')
   const [searchLogin, setSearchLogin] = useState('')
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
     setLoading(true)
     setError('')
 
@@ -25,21 +24,27 @@ const SalariesListPage = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadEmployees()
   }, [])
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      loadEmployees()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadEmployees])
+
   const filteredEmployees = EmployeeService.searchEmployees(employees, {
+    searchRef,
     searchName,
-    searchEmail,
+    searchGender,
     searchLogin,
   })
 
   const resetSearch = () => {
+    setSearchRef('')
     setSearchName('')
-    setSearchEmail('')
+    setSearchGender('')
     setSearchLogin('')
   }
 
@@ -49,7 +54,7 @@ const SalariesListPage = () => {
         <div>
           <p className="salaries-kicker">Frontoffice</p>
           <h1>Liste des salariés</h1>
-          <p>Utilisateurs et salariés récupérés depuis Dolibarr.</p>
+          <p>Références, noms, genres et identifiants des employés Dolibarr.</p>
         </div>
 
         <button type="button" onClick={loadEmployees} disabled={loading}>
@@ -59,38 +64,51 @@ const SalariesListPage = () => {
 
       <section className="salaries-filter">
         <div className="filter-title">
-          <h2>Recherche multi critère</h2>
+          <h2>Recherche multicritère</h2>
           <span>{filteredEmployees.length} résultat(s)</span>
         </div>
 
         <div className="filter-grid">
           <label>
-            Nom ou prénom
+            Référence
+            <input
+              type="text"
+              value={searchRef}
+              onChange={(event) => setSearchRef(event.target.value)}
+              placeholder="Ex : 1"
+            />
+          </label>
+
+          <label>
+            Nom
             <input
               type="text"
               value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
+              onChange={(event) => setSearchName(event.target.value)}
               placeholder="Ex : Rakoto"
             />
           </label>
 
           <label>
-            Email
-            <input
-              type="text"
-              value={searchEmail}
-              onChange={(e) => setSearchEmail(e.target.value)}
-              placeholder="Ex : test@gmail.com"
-            />
+            Genre
+            <select
+              value={searchGender}
+              onChange={(event) => setSearchGender(event.target.value)}
+            >
+              <option value="">Tous</option>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+              <option value="autre">Autre</option>
+            </select>
           </label>
 
           <label>
-            Login
+            Login / identifiant
             <input
               type="text"
               value={searchLogin}
-              onChange={(e) => setSearchLogin(e.target.value)}
-              placeholder="Ex : admin"
+              onChange={(event) => setSearchLogin(event.target.value)}
+              placeholder="Ex : rakoto1"
             />
           </label>
         </div>
@@ -117,30 +135,26 @@ const SalariesListPage = () => {
             <table>
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Login</th>
+                  <th>Réf.</th>
                   <th>Nom</th>
-                  <th>Prénom</th>
-                  <th>Email</th>
-                  <th>Statut</th>
+                  <th>Genre</th>
+                  <th>Login / identifiant</th>
                 </tr>
               </thead>
 
               <tbody>
                 {filteredEmployees.length === 0 && (
                   <tr>
-                    <td colSpan="6">Aucun salarié trouvé.</td>
+                    <td colSpan="4">Aucun salarié trouvé.</td>
                   </tr>
                 )}
 
                 {filteredEmployees.map((employee) => (
-                  <tr key={employee.id}>
-                    <td>{employee.id || '-'}</td>
+                  <tr key={employee.id || EmployeeService.getEmployeeRef(employee)}>
+                    <td>{EmployeeService.getEmployeeRef(employee) || '-'}</td>
+                    <td>{EmployeeService.getEmployeeName(employee) || '-'}</td>
+                    <td>{EmployeeService.getEmployeeGender(employee)}</td>
                     <td>{employee.login || '-'}</td>
-                    <td>{employee.lastname || '-'}</td>
-                    <td>{employee.firstname || '-'}</td>
-                    <td>{employee.email || '-'}</td>
-                    <td>{employee.status || '-'}</td>
                   </tr>
                 ))}
               </tbody>

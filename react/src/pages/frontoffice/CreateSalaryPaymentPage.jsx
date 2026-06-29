@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { EmployeeService } from '../../services/dolibarr/EmployeeService'
 import { SalaryService } from '../../services/dolibarr/SalaryService'
 import '../../styles/salary-create-page.css'
@@ -14,32 +14,34 @@ const CreateSalaryPaymentPage = () => {
     dateep: '',
   })
 
-  const [payments, setPayments] = useState([
+    const [payments, setPayments] = useState([
     {
-      amount: '',
-      datepaye: '',
-      paiementtype: '2',
-      accountid: '1',
-      num_payment: '',
+        amount: '',
+        datepaye: '',
+        num_payment: 'ESPECE',
     },
-  ])
+    ])
 
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
     try {
       const data = await EmployeeService.getEmployees()
       setEmployees(data)
     } catch (err) {
       setError(err.message)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    loadEmployees()
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      loadEmployees()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadEmployees])
 
   const handleSalaryChange = (event) => {
     const { name, value } = event.target
@@ -69,9 +71,7 @@ const CreateSalaryPaymentPage = () => {
       {
         amount: '',
         datepaye: '',
-        paiementtype: '2',
-        accountid: '1',
-        num_payment: '',
+        num_payment: 'ESPECE',
       },
     ])
   }
@@ -99,13 +99,11 @@ const CreateSalaryPaymentPage = () => {
     })
 
     setPayments([
-      {
+    {
         amount: '',
         datepaye: '',
-        paiementtype: '2',
-        accountid: '1',
-        num_payment: '',
-      },
+        num_payment: 'ESPECE',
+    },
     ])
   }
 
@@ -134,7 +132,13 @@ const CreateSalaryPaymentPage = () => {
 
   const totalPaid = getTotalPaid()
   const resteAPayer = Number(salary.amount || 0) - totalPaid
-  const paymentStatus = resteAPayer === 0 ? 'Payé totalement' : 'Paiement partiel'
+  const paymentStatus =
+    resteAPayer < 0
+      ? 'Montant payé supérieur au salaire'
+      : resteAPayer === 0
+        ? 'Payé totalement'
+        : 'Paiement partiel'
+  const paymentStatusClass = resteAPayer < 0 ? 'status-danger' : ''
 
   return (
     <section className="salary-create-page">
@@ -259,26 +263,11 @@ const CreateSalaryPaymentPage = () => {
                       onChange={(event) => handlePaymentChange(index, event)}
                     />
                   </label>
-
-                  <label>
-                    ID mode paiement
-                    <input
-                      type="number"
-                      name="paiementtype"
-                      value={payment.paiementtype}
-                      onChange={(event) => handlePaymentChange(index, event)}
-                    />
-                  </label>
-
-                  <label>
-                    ID compte bancaire
-                    <input
-                      type="number"
-                      name="accountid"
-                      value={payment.accountid}
-                      onChange={(event) => handlePaymentChange(index, event)}
-                    />
-                  </label>
+    
+                    <label>
+                        Mode de paiement
+                        <input type="text" value="Espèces" disabled />
+                    </label>
 
                   <label>
                     Référence paiement
@@ -322,7 +311,7 @@ const CreateSalaryPaymentPage = () => {
 
           <div>
             <span>Statut</span>
-            <strong>{paymentStatus}</strong>
+            <strong className={paymentStatusClass}>{paymentStatus}</strong>
           </div>
         </section>
 

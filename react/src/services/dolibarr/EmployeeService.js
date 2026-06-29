@@ -1,71 +1,63 @@
 import { dolibarrClient } from './dolibarrClient'
 
 export const EmployeeService = {
-  // Récupérer la liste des salariés depuis Dolibarr
   getEmployees: async () => {
     const data = await dolibarrClient.get('/users', {
-      limit: 100,
+      limit: 10000,
       sortfield: 't.lastname',
       sortorder: 'ASC',
     })
 
-    return data
+    return Array.isArray(data) ? data : []
   },
 
-  // Filtrer la liste des salariés
-  searchEmployees: (employees, filters) => {
-    const searchName = filters.searchName.toLowerCase()
-    const searchEmail = filters.searchEmail.toLowerCase()
-    const searchLogin = filters.searchLogin.toLowerCase()
-
-    return employees.filter((employee) => {
-      const fullName = `${employee.lastname || ''} ${employee.firstname || ''}`.toLowerCase()
-      const email = `${employee.email || ''}`.toLowerCase()
-      const login = `${employee.login || ''}`.toLowerCase()
-
-      return (
-        fullName.includes(searchName) &&
-        email.includes(searchEmail) &&
-        login.includes(searchLogin)
-      )
-    })
+  getEmployeeRef: (employee) => {
+    return String(
+      employee?.ref_employee ||
+        employee?.ref_ext ||
+        employee?.array_options?.options_ref_employe ||
+        employee?.array_options?.ref_employe ||
+        employee?.id ||
+        '',
+    )
   },
 
-  // Récupérer le salaire d'un salarié
-  getEmployeeSalary: (employee) => {
-    return Number(employee.salary || 0)
+  getEmployeeName: (employee) => {
+    return `${employee?.lastname || ''} ${employee?.firstname || ''}`.trim()
   },
 
-  // Récupérer le genre d'un salarié
   getEmployeeGender: (employee) => {
-    const gender = employee.gender || ''
+    const gender = String(employee?.gender || '').toLowerCase()
 
-    if (gender === 'man') {
+    if (gender === 'man' || gender === 'homme' || gender === 'm') {
       return 'homme'
     }
 
-    if (gender === 'woman') {
+    if (gender === 'woman' || gender === 'femme' || gender === 'f') {
       return 'femme'
     }
 
     return 'autre'
   },
 
-  // Calculer le montant total des salaires par genre
-  getSalaryAmountByGender: (employees) => {
-    const result = {
-      homme: 0,
-      femme: 0,
-      autre: 0,
-    }
+  searchEmployees: (employees, filters) => {
+    const searchRef = String(filters.searchRef || '').toLowerCase()
+    const searchName = String(filters.searchName || '').toLowerCase()
+    const searchGender = String(filters.searchGender || '').toLowerCase()
+    const searchLogin = String(filters.searchLogin || '').toLowerCase()
 
-    employees.forEach((employee) => {
-      const salary = EmployeeService.getEmployeeSalary(employee)
-      const gender = EmployeeService.getEmployeeGender(employee)
+    return employees.filter((employee) => {
+      const ref = EmployeeService.getEmployeeRef(employee).toLowerCase()
+      const name = EmployeeService.getEmployeeName(employee).toLowerCase()
+      const gender = EmployeeService.getEmployeeGender(employee).toLowerCase()
+      const login = String(employee?.login || '').toLowerCase()
 
-      result[gender] += salary
+      return (
+        ref.includes(searchRef) &&
+        name.includes(searchName) &&
+        gender.includes(searchGender) &&
+        login.includes(searchLogin)
+      )
     })
-
-    return result
   },
 }

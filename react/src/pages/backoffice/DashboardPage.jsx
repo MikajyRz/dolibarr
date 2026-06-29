@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { EmployeeService } from '../../services/dolibarr/EmployeeService'
 import { SalaryService } from '../../services/dolibarr/SalaryService'
 import '../../styles/dashboard-page.css'
@@ -9,35 +9,41 @@ const DashboardPage = () => {
     femme: 0,
     autre: 0,
   })
-
   const [salaryByMonth, setSalaryByMonth] = useState({})
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true)
     setError('')
 
     try {
-      const employees = await EmployeeService.getEmployees()
-      const salaries = await SalaryService.getSalaries()
+      const [employees, salaries, payments] = await Promise.all([
+        EmployeeService.getEmployees(),
+        SalaryService.getSalaries(),
+        SalaryService.getSalaryPayments(),
+      ])
 
-      const genderResult = EmployeeService.getSalaryAmountByGender(employees)
-      const monthResult = SalaryService.getSalaryAmountByMonth(salaries)
-
-      setSalaryByGender(genderResult)
-      setSalaryByMonth(monthResult)
+      setSalaryByGender(SalaryService.getSalaryAmountByGender(salaries, employees))
+      setSalaryByMonth(
+        payments.length > 0
+          ? SalaryService.getPaymentAmountByMonth(payments)
+          : SalaryService.getSalaryAmountByMonth(salaries),
+      )
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    loadDashboard()
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      loadDashboard()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadDashboard])
 
   const formatAmount = (amount) => {
     return `${Number(amount || 0).toLocaleString()} Ar`
@@ -60,7 +66,7 @@ const DashboardPage = () => {
         <div>
           <p className="dashboard-kicker">Backoffice</p>
           <h1>Dashboard</h1>
-          <p>Montant des salaires par genre et par mois.</p>
+          <p>Montant des salaires par genre et paiements par mois.</p>
         </div>
 
         <button type="button" onClick={loadDashboard} disabled={loading}>
@@ -99,7 +105,7 @@ const DashboardPage = () => {
           <div className="dashboard-table">
             <div className="dashboard-table-header">
               <h2>Montant de salaire par genre</h2>
-              <span>Données employés</span>
+              <span>Données salaires + employés</span>
             </div>
 
             <div className="table-container">
@@ -143,10 +149,10 @@ const DashboardPage = () => {
           <div className="dashboard-table">
             <div className="dashboard-table-header">
               <div>
-                <h2>Montant de salaire par mois</h2>
-                <p>Date de règlement utilisée comme référence.</p>
+                <h2>Montant payé par mois</h2>
+                <p>Date de paiement utilisée comme référence.</p>
               </div>
-              <span>Données salaires</span>
+              <span>Données paiements</span>
             </div>
 
             <div className="table-container">
@@ -161,7 +167,7 @@ const DashboardPage = () => {
                 <tbody>
                   {salaryMonths.length === 0 && (
                     <tr>
-                      <td colSpan="2">Aucun règlement de salaire trouvé.</td>
+                      <td colSpan="2">Aucun paiement de salaire trouvé.</td>
                     </tr>
                   )}
 

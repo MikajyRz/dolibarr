@@ -18,6 +18,7 @@ function BackofficeLayout() {
         <nav>
           <Link to="/backoffice/dashboard">Dashboard</Link>
           <Link to="/backoffice/products">Produits</Link>
+          <Link to="/backoffice/import">Import</Link>
         </nav>
 
         <button className="logout-button" onClick={handleLogout}>
