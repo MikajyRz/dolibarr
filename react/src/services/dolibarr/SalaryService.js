@@ -66,7 +66,7 @@ export const SalaryService = {
 
   getSalaryPayments: async () => {
     try {
-      const data = await dolibarrClient.get('/salaries/getAllPayments', {
+      const data = await dolibarrClient.get('/salaries/payments', {
         limit: 10000,
         sortfield: 't.datep',
         sortorder: 'DESC',
