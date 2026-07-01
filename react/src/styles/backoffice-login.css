@@ -1,0 +1,37 @@
+.backoffice-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--color-page);
+  padding: 24px;
+}
+
+.login-card {
+  width: min(100%, 420px);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  box-shadow: 0 14px 34px rgba(36, 52, 66, 0.14);
+  padding: 28px;
+}
+
+.login-card h1 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.6rem;
+}
+
+.login-card p {
+  margin: 8px 0 22px;
+  color: var(--color-muted);
+}
+
+.login-card label {
+  display: grid;
+  gap: 8px;
+}
+
+.login-card button {
+  width: 100%;
+  margin-top: 18px;
+}
