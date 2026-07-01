@@ -40,6 +40,27 @@ export const EmployeeService = {
     return 'autre'
   },
 
+  getEmployeeId: (employee) => {
+    return Number(employee?.id || employee?.rowid || 0)
+  },
+
+  getEmployeePhotoDataUrl: async (employee) => {
+    const employeeId = EmployeeService.getEmployeeId(employee)
+
+    if (!employeeId || !employee?.photo) {
+      return ''
+    }
+
+    const document = await dolibarrClient.get('/documents/download', {
+      modulepart: 'user',
+      original_file: `${employeeId}/photos/${employee.photo}`,
+    })
+    const content = document?.content || ''
+    const contentType = document?.['content-type'] || 'image/jpeg'
+
+    return content ? `data:${contentType};base64,${content}` : ''
+  },
+
   searchEmployees: (employees, filters) => {
     const searchRef = String(filters.searchRef || '').toLowerCase()
     const searchName = String(filters.searchName || '').toLowerCase()

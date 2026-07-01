@@ -2,14 +2,10 @@ import { dolibarrClient } from '../dolibarr/dolibarrClient'
 import { getDolibarrId, isoDateToTimestamp } from './importUtils'
 
 const CASH_PAYMENT_TYPE_ID = Number(
-  import.meta.env.VITE_DOLIBARR_CASH_PAYMENT_TYPE_ID ||
-    import.meta.env.VITE_DOLIBARR_PAYMENT_TYPE_ID ||
-    4,
+  import.meta.env.VITE_DOLIBARR_CASH_PAYMENT_TYPE_ID || 4,
 )
 const CASH_ACCOUNT_ID = Number(
-  import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID ||
-    import.meta.env.VITE_DOLIBARR_BANK_ACCOUNT_ID ||
-    1,
+  import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID || 1,
 )
 
 function getUserRef(user) {
@@ -116,18 +112,22 @@ async function getAllSalaries() {
   return Array.isArray(salaries) ? salaries : []
 }
 
-async function uploadEmployeeImage(image) {
-  const payload = {
-    filename: image.filename,
-    modulepart: 'ecm',
-    subdir: `import/employees/${image.ref_employe}`,
-    filecontent: image.base64,
-    fileencoding: 'base64',
-    overwriteifexists: 1,
-    createdirifnotexists: 1,
+async function uploadEmployeeImage(image, userId) {
+  for (const file of image.files) {
+    await dolibarrClient.post('/documents/upload', {
+      filename: file.filename,
+      modulepart: 'user',
+      subdir: `${userId}/${file.subdir}`,
+      filecontent: file.base64,
+      fileencoding: 'base64',
+      overwriteifexists: 1,
+      createdirifnotexists: 1,
+    })
   }
 
-  return dolibarrClient.post('/documents/upload', payload)
+  await dolibarrClient.put(`/users/${userId}`, {
+    photo: 'photo.jpg',
+  })
 }
 
 function findExistingUser(users, employee) {
@@ -287,13 +287,19 @@ export const ImportDolibarrService = {
 
       try {
         onProgress?.(`Upload image ${index + 1}/${images.length} : ${image.filename}`)
-        await uploadEmployeeImage(image)
+        const employeeId = employeeMap.get(image.ref_employe)
+
+        if (!employeeId) {
+          throw new Error(`Impossible de trouver l'employé ${image.ref_employe}.`)
+        }
+
+        await uploadEmployeeImage(image, employeeId)
 
         result.images.push({
           status: 'uploaded',
           ref_employe: image.ref_employe,
           filename: image.filename,
-          message: `Image ${image.filename} uploadée.`,
+          message: `Photo employé ${image.ref_employe} uploadée.`,
         })
       } catch (error) {
         result.errors.push(`Image ${image.filename} : ${error.message}`)

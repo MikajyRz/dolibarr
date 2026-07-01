@@ -105,6 +105,28 @@
   overflow: hidden;
 }
 
+.employee-photo,
+.employee-photo-placeholder {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d8dde2;
+  border-radius: 6px;
+}
+
+.employee-photo {
+  display: block;
+  object-fit: cover;
+  background: #fbfcfd;
+}
+
+.employee-photo-placeholder {
+  display: grid;
+  place-items: center;
+  background: #f3f6f8;
+  color: #6b7c89;
+  font-weight: 700;
+}
+
 .table-title {
   border-bottom: 1px solid #d8dde2;
   background: var(--color-surface-soft);

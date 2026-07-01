@@ -17,6 +17,96 @@ function getRefFromFilename(filename) {
   return numberMatch ? numberMatch[0] : nameWithoutExtension
 }
 
+async function createBitmap(blob) {
+  if (window.createImageBitmap) {
+    return window.createImageBitmap(blob)
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    const url = URL.createObjectURL(blob)
+
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error("Impossible de lire l'image."))
+    }
+
+    image.src = url
+  })
+}
+
+function drawCover(context, image, width, height) {
+  const sourceWidth = image.width
+  const sourceHeight = image.height
+  const sourceRatio = sourceWidth / sourceHeight
+  const targetRatio = width / height
+  let cropWidth = sourceWidth
+  let cropHeight = sourceHeight
+  let cropX = 0
+  let cropY = 0
+
+  if (sourceRatio > targetRatio) {
+    cropWidth = sourceHeight * targetRatio
+    cropX = (sourceWidth - cropWidth) / 2
+  } else {
+    cropHeight = sourceWidth / targetRatio
+    cropY = (sourceHeight - cropHeight) / 2
+  }
+
+  context.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, width, height)
+}
+
+async function toJpegBase64(blob, width, height) {
+  const image = await createBitmap(blob)
+  const canvas = document.createElement('canvas')
+  const targetWidth = width || image.width
+  const targetHeight = height || image.height
+  const context = canvas.getContext('2d')
+
+  canvas.width = targetWidth
+  canvas.height = targetHeight
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, targetWidth, targetHeight)
+  drawCover(context, image, targetWidth, targetHeight)
+
+  if (image.close) {
+    image.close()
+  }
+
+  return canvas.toDataURL('image/jpeg', 0.9).replace(/^data:image\/jpeg;base64,/, '')
+}
+
+async function buildDolibarrPhotoFiles(blob) {
+  const [photo, small, mini] = await Promise.all([
+    toJpegBase64(blob),
+    toJpegBase64(blob, 480, 270),
+    toJpegBase64(blob, 128, 72),
+  ])
+
+  return [
+    {
+      filename: 'photo.jpg',
+      subdir: 'photos',
+      base64: photo,
+    },
+    {
+      filename: 'photo_small.jpg',
+      subdir: 'photos/thumbs',
+      base64: small,
+    },
+    {
+      filename: 'photo_mini.jpg',
+      subdir: 'photos/thumbs',
+      base64: mini,
+    },
+  ]
+}
+
 export const ImportImagesZipService = {
   read: async (file) => {
     if (!file) {
@@ -31,23 +121,22 @@ export const ImportImagesZipService = {
         continue
       }
 
-      const filename = getFileName(entry.name)
-      const extension = getFileExtension(filename)
+      const originalFilename = getFileName(entry.name)
+      const extension = getFileExtension(originalFilename)
 
       if (!IMAGE_EXTENSIONS.has(extension)) {
         continue
       }
 
       const blob = await entry.async('blob')
-      const base64 = await entry.async('base64')
-      const refEmploye = getRefFromFilename(filename)
+      const refEmploye = getRefFromFilename(originalFilename)
 
       images.push({
-        filename,
+        filename: 'photo.jpg',
+        originalFilename,
         ref_employe: refEmploye,
-        base64,
         previewUrl: URL.createObjectURL(blob),
-        dolibarrPath: `import/employees/${refEmploye}/${filename}`,
+        files: await buildDolibarrPhotoFiles(blob),
       })
     }
 

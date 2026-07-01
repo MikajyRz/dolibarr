@@ -2,6 +2,43 @@ import { useCallback, useEffect, useState } from 'react'
 import { EmployeeService } from '../../services/dolibarr/EmployeeService'
 import '../../styles/salaries-list-page.css'
 
+function EmployeePhoto({ employee }) {
+  const [photoUrl, setPhotoUrl] = useState('')
+  const name = EmployeeService.getEmployeeName(employee)
+
+  useEffect(() => {
+    let mounted = true
+
+    EmployeeService.getEmployeePhotoDataUrl(employee)
+      .then((url) => {
+        if (mounted) {
+          setPhotoUrl(url)
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setPhotoUrl('')
+        }
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [employee])
+
+  if (!photoUrl) {
+    return <div className="employee-photo-placeholder">-</div>
+  }
+
+  return (
+    <img
+      className="employee-photo"
+      src={photoUrl}
+      alt={name || 'Employé'}
+    />
+  )
+}
+
 const SalariesListPage = () => {
   const [employees, setEmployees] = useState([])
   const [searchRef, setSearchRef] = useState('')
@@ -54,7 +91,7 @@ const SalariesListPage = () => {
         <div>
           <p className="salaries-kicker">Frontoffice</p>
           <h1>Liste des salariés</h1>
-          <p>Références, noms, genres et identifiants des employés Dolibarr.</p>
+          <p>Références, photos, noms, genres et identifiants des employés Dolibarr.</p>
         </div>
 
         <button type="button" onClick={loadEmployees} disabled={loading}>
@@ -135,6 +172,7 @@ const SalariesListPage = () => {
             <table>
               <thead>
                 <tr>
+                  <th>Photo</th>
                   <th>Réf.</th>
                   <th>Nom</th>
                   <th>Genre</th>
@@ -145,12 +183,18 @@ const SalariesListPage = () => {
               <tbody>
                 {filteredEmployees.length === 0 && (
                   <tr>
-                    <td colSpan="4">Aucun salarié trouvé.</td>
+                    <td colSpan="5">Aucun salarié trouvé.</td>
                   </tr>
                 )}
 
                 {filteredEmployees.map((employee) => (
                   <tr key={employee.id || EmployeeService.getEmployeeRef(employee)}>
+                    <td>
+                      <EmployeePhoto
+                        key={EmployeeService.getEmployeeRef(employee)}
+                        employee={employee}
+                      />
+                    </td>
                     <td>{EmployeeService.getEmployeeRef(employee) || '-'}</td>
                     <td>{EmployeeService.getEmployeeName(employee) || '-'}</td>
                     <td>{EmployeeService.getEmployeeGender(employee)}</td>

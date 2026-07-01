@@ -81,9 +81,10 @@ export const dolibarrClient = {
     })
   },
 
-  delete: (endpoint) => {
+  delete: (endpoint, params = {}) => {
     return request(endpoint, {
       method: 'DELETE',
+      params,
     })
   },
 }

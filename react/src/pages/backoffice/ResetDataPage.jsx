@@ -58,7 +58,7 @@ function ResetDataPage() {
         <div>
           <p className="reset-kicker">Backoffice</p>
           <h1>Réinitialisation</h1>
-          <p>Paiements si disponibles, salaires, puis utilisateurs sauf rowid=1.</p>
+          <p>Paiements si disponibles, salaires, photos, puis utilisateurs sauf rowid=1.</p>
         </div>
       </div>
 
@@ -91,6 +91,8 @@ function ResetDataPage() {
           <div className="reset-counts">
             <span>Paiements supprimés : {result.summary.paymentsDeleted}</span>
             <span>Salaires supprimés : {result.summary.salariesDeleted}</span>
+            <span>Photos supprimées : {result.summary.photosDeleted}</span>
+            <span>Photos partielles : {result.summary.photosPartial}</span>
             <span>Utilisateurs supprimés : {result.summary.usersDeleted}</span>
             <span>Utilisateurs conservés : {result.summary.usersKept}</span>
           </div>

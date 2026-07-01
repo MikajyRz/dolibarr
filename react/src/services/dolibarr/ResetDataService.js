@@ -4,6 +4,10 @@ function getId(item) {
   return Number(item?.id || item?.rowid || item?.pid || item?.fk_payment || 0)
 }
 
+function unique(items) {
+  return [...new Set(items.filter(Boolean))]
+}
+
 async function getAllUsers() {
   const users = await dolibarrClient.get('/users', {
     limit: 10000,
@@ -34,6 +38,19 @@ async function getAllSalaryPayments() {
   return Array.isArray(payments) ? payments : []
 }
 
+async function getUserDocuments(userId) {
+  try {
+    const documents = await dolibarrClient.get('/documents', {
+      modulepart: 'user',
+      id: userId,
+    })
+
+    return Array.isArray(documents) ? documents : []
+  } catch {
+    return []
+  }
+}
+
 async function tryDelete(endpoint) {
   try {
     await dolibarrClient.delete(endpoint)
@@ -43,6 +60,113 @@ async function tryDelete(endpoint) {
       ok: false,
       message: error.message,
     }
+  }
+}
+
+async function tryDeleteDocument(originalFile) {
+  try {
+    await dolibarrClient.delete('/documents', {
+      modulepart: 'user',
+      original_file: originalFile,
+    })
+
+    return { ok: true }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error.message,
+    }
+  }
+}
+
+function getDocumentPath(document, userId) {
+  const path = String(
+    document?.original_file ||
+      document?.relativename ||
+      document?.relativepath ||
+      document?.fullname ||
+      document?.name ||
+      '',
+  ).replaceAll('\\', '/')
+
+  if (!path) {
+    return ''
+  }
+
+  if (path.startsWith(`${userId}/`)) {
+    return path
+  }
+
+  const userPathIndex = path.indexOf(`/${userId}/`)
+
+  if (userPathIndex >= 0) {
+    return path.slice(userPathIndex + 1)
+  }
+
+  return `${userId}/${path.replace(/^\/+/, '')}`
+}
+
+function getUserPhotoPaths(user, documents = []) {
+  const userId = getId(user)
+  const photo = user?.photo
+  const documentPaths = documents
+    .map((document) => getDocumentPath(document, userId))
+    .filter((path) => path.startsWith(`${userId}/photos/`))
+
+  return unique([
+    photo && `${userId}/photos/${photo}`,
+    photo && `${userId}/photos/thumbs/photo_small.jpg`,
+    photo && `${userId}/photos/thumbs/photo_mini.jpg`,
+    ...documentPaths,
+  ])
+}
+
+async function deleteUserPhotos(user) {
+  const userId = getId(user)
+
+  if (!userId) {
+    return { status: 'skipped', message: 'Photos utilisateur sans ID.' }
+  }
+
+  const documents = await getUserDocuments(userId)
+  const photoPaths = getUserPhotoPaths(user, documents)
+  const errors = []
+  let deletedCount = 0
+
+  if (photoPaths.length === 0) {
+    return {
+      status: 'skipped',
+      message: `Aucune photo utilisateur ${userId} à supprimer.`,
+    }
+  }
+
+  for (const photoPath of photoPaths) {
+    const result = await tryDeleteDocument(photoPath)
+
+    if (result.ok) {
+      deletedCount += 1
+    } else {
+      errors.push(`${photoPath} : ${result.message}`)
+    }
+  }
+
+  if (errors.length > 0 && deletedCount === 0) {
+    return {
+      status: 'error',
+      message: `Photos utilisateur ${userId} non supprimées : ${errors.join(' | ')}`,
+    }
+  }
+
+  if (errors.length > 0) {
+    return {
+      status: 'partial',
+      message: `Photos utilisateur ${userId} partiellement supprimées : ${errors.join(' | ')}`,
+    }
+  }
+
+  return {
+    status: 'deleted',
+    message: `Photos utilisateur ${userId} supprimées (${deletedCount}).`,
   }
 }
 
@@ -133,6 +257,9 @@ function buildSummary(result) {
     paymentsErrors: countByStatus(result.payments, 'error'),
     salariesDeleted: countByStatus(result.salaries, 'deleted'),
     salariesErrors: countByStatus(result.salaries, 'error'),
+    photosDeleted: countByStatus(result.photos, 'deleted'),
+    photosPartial: countByStatus(result.photos, 'partial'),
+    photosErrors: countByStatus(result.photos, 'error'),
     usersDeleted: countByStatus(result.users, 'deleted'),
     usersKept: countByStatus(result.users, 'kept'),
     usersErrors: countByStatus(result.users, 'error'),
@@ -160,6 +287,7 @@ export const ResetDataService = {
     const result = {
       payments: [],
       salaries: [],
+      photos: [],
       users: [],
       errors: [],
       summary: {},
@@ -191,6 +319,11 @@ export const ResetDataService = {
     for (let index = 0; index < users.length; index += 1) {
       const userId = getId(users[index])
 
+      if (userId !== 1) {
+        onProgress?.(`Suppression photos utilisateur ${index + 1}/${users.length} : ${userId}`)
+        result.photos.push(await deleteUserPhotos(users[index]))
+      }
+
       onProgress?.(`Suppression utilisateur ${index + 1}/${users.length} : ${userId}`)
       result.users.push(await deleteUser(users[index]))
     }
@@ -199,6 +332,7 @@ export const ResetDataService = {
     result.errors = [
       ...getErrors(result.payments),
       ...getErrors(result.salaries),
+      ...getErrors(result.photos),
       ...getErrors(result.users),
     ]
 
