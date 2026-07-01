@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { ImportCsvService } from '../../services/dolibarr/import/import/importCsvService'
-import { ImportDolibarrService } from '../../services/dolibarr/import/import/importDolibarrService'
-import { ImportImagesZipService } from '../../services/dolibarr/import/import/importImagesZipService'
-import { ImportValidationService } from '../../services/dolibarr/import/import/importValidationService'
+import { ImportCsvService } from '../../services/dolibarr/import/importCsvService'
+import { ImportDolibarrService } from '../../services/dolibarr/import/importDolibarrService'
+import { ImportImagesZipService } from '../../services/dolibarr/import/importImagesZipService'
+import { ImportValidationService } from '../../services/dolibarr/import/importValidationService'
 import '../../styles/import-page.css'
 
 function ImportPage() {

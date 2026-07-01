@@ -1,4 +1,4 @@
-import { dolibarrClient } from '../../dolibarrClient'
+import { dolibarrClient } from '../dolibarrClient'
 import { getDolibarrId, isoDateToTimestamp } from './importUtils'
 
 const CASH_PAYMENT_TYPE_ID = Number(
