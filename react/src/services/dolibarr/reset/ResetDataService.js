@@ -1,4 +1,4 @@
-import { dolibarrClient } from './dolibarrClient'
+import { dolibarrClient } from '../dolibarrClient'
 
 function getId(item) {
   return Number(item?.id || item?.rowid || item?.pid || item?.fk_payment || 0)

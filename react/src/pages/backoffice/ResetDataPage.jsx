@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ResetDataService } from '../../services/dolibarr/ResetDataService'
+import { ResetDataService } from '../../services/dolibarr/reset/ResetDataService'
 import '../../styles/reset-data-page.css'
 
 function ResetDataPage() {
