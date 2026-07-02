@@ -13,6 +13,10 @@ export const ImportValidationService = {
         errors.push(`Ligne ${employee.line} employés : nom est obligatoire.`)
       }
 
+      if (!employee.poste) {
+        errors.push(`Ligne ${employee.line} employés : poste est obligatoire.`)
+      }
+
       if (!employee.genre) {
         errors.push(`Ligne ${employee.line} employés : genre doit être homme ou femme.`)
       }

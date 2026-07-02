@@ -14,6 +14,7 @@ export const ImportEmployeesCsvService = {
         identifiant: cleanText(row.identifiant),
         mdp: cleanText(row.mdp),
         heure_travail_semaine: parseAmount(row.heure_travail_semaine),
+        poste: cleanText(row.poste),
       }
     })
   },

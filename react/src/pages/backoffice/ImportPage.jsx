@@ -148,7 +148,7 @@ function ImportPage() {
               resetPreview()
             }}
           />
-          <small>Colonnes : ref_employe, nom, genre, identifiant, mdp, heure_travail_semaine</small>
+          <small>Colonnes : ref_employe, nom, genre, identifiant, mdp, heure_travail_semaine, poste</small>
         </div>
 
         <div className="import-upload-card">
@@ -245,6 +245,7 @@ function ImportPage() {
                 <tr>
                   <th>Réf.</th>
                   <th>Nom</th>
+                  <th>Poste</th>
                   <th>Genre</th>
                   <th>Identifiant</th>
                   <th>Heures / semaine</th>
@@ -256,6 +257,7 @@ function ImportPage() {
                   <tr key={employee.ref_employe}>
                     <td>{employee.ref_employe}</td>
                     <td>{employee.nom}</td>
+                    <td>{employee.poste}</td>
                     <td>{employee.genre}</td>
                     <td>{employee.identifiant}</td>
                     <td>{employee.heure_travail_semaine}</td>

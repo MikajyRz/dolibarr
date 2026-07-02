@@ -26,6 +26,10 @@ export const EmployeeService = {
     return `${employee?.lastname || ''} ${employee?.firstname || ''}`.trim()
   },
 
+  getEmployeePoste: (employee) => {
+    return `${employee?.job || ''}` 
+  },
+
   getEmployeeGender: (employee) => {
     const gender = String(employee?.gender || '').toLowerCase()
 
@@ -64,18 +68,21 @@ export const EmployeeService = {
   searchEmployees: (employees, filters) => {
     const searchRef = String(filters.searchRef || '').toLowerCase()
     const searchName = String(filters.searchName || '').toLowerCase()
+    const searchPost = String(filters.searchPost || '').toLowerCase()
     const searchGender = String(filters.searchGender || '').toLowerCase()
     const searchLogin = String(filters.searchLogin || '').toLowerCase()
 
     return employees.filter((employee) => {
       const ref = EmployeeService.getEmployeeRef(employee).toLowerCase()
       const name = EmployeeService.getEmployeeName(employee).toLowerCase()
+      const post = EmployeeService.getEmployeePoste(employee).toLowerCase()
       const gender = EmployeeService.getEmployeeGender(employee).toLowerCase()
       const login = String(employee?.login || '').toLowerCase()
 
       return (
         ref.includes(searchRef) &&
         name.includes(searchName) &&
+        post.includes(searchPost) &&
         gender.includes(searchGender) &&
         login.includes(searchLogin)
       )

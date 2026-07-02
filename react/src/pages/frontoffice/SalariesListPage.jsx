@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EmployeeService } from '../../services/dolibarr/EmployeeService'
 import '../../styles/salaries-list-page.css'
 
@@ -43,6 +43,7 @@ const SalariesListPage = () => {
   const [employees, setEmployees] = useState([])
   const [searchRef, setSearchRef] = useState('')
   const [searchName, setSearchName] = useState('')
+  const [searchPost, setSearchPost] = useState('')
   const [searchGender, setSearchGender] = useState('')
   const [searchLogin, setSearchLogin] = useState('')
   const [loading, setLoading] = useState(false)
@@ -74,13 +75,25 @@ const SalariesListPage = () => {
   const filteredEmployees = EmployeeService.searchEmployees(employees, {
     searchRef,
     searchName,
+    searchPost,
     searchGender,
     searchLogin,
   })
 
+  const postOptions = useMemo(() => {
+    const posts = employees
+      .map((employee) => EmployeeService.getEmployeePoste(employee).trim())
+      .filter(Boolean)
+
+    return [...new Set(posts)].sort((firstPost, secondPost) =>
+      firstPost.localeCompare(secondPost),
+    )
+  }, [employees])
+
   const resetSearch = () => {
     setSearchRef('')
     setSearchName('')
+    setSearchPost('')
     setSearchGender('')
     setSearchLogin('')
   }
@@ -125,6 +138,22 @@ const SalariesListPage = () => {
               placeholder="Ex : Rakoto"
             />
           </label>
+
+          <label>
+            Poste
+            <select
+              value={searchPost}
+              onChange={(event) => setSearchPost(event.target.value)}
+            >
+              <option value="">Tous</option>
+              {postOptions.map((post) => (
+                <option key={post} value={post}>
+                  {post}
+                </option>
+              ))}
+            </select>
+          </label>
+        
 
           <label>
             Genre
@@ -175,6 +204,7 @@ const SalariesListPage = () => {
                   <th>Photo</th>
                   <th>Réf.</th>
                   <th>Nom</th>
+                  <th>Poste</th>
                   <th>Genre</th>
                   <th>Login / identifiant</th>
                 </tr>
@@ -183,7 +213,7 @@ const SalariesListPage = () => {
               <tbody>
                 {filteredEmployees.length === 0 && (
                   <tr>
-                    <td colSpan="5">Aucun salarié trouvé.</td>
+                    <td colSpan="6">Aucun salarié trouvé.</td>
                   </tr>
                 )}
 
@@ -197,6 +227,7 @@ const SalariesListPage = () => {
                     </td>
                     <td>{EmployeeService.getEmployeeRef(employee) || '-'}</td>
                     <td>{EmployeeService.getEmployeeName(employee) || '-'}</td>
+                    <td>{EmployeeService.getEmployeePoste(employee) || '-'}</td>
                     <td>{EmployeeService.getEmployeeGender(employee)}</td>
                     <td>{employee.login || '-'}</td>
                   </tr>

@@ -34,6 +34,7 @@ function buildEmployeePayload(employee, withPassword = true) {
     ref_employee: employee.ref_employe,
     ref_ext: employee.ref_employe,
     gender: employee.genre,
+    job: employee.poste,
     weeklyhours: Number(employee.heure_travail_semaine || 0),
     employee: 1,
     admin: 0,
