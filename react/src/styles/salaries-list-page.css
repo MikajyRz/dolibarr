@@ -143,6 +143,25 @@
   padding: 12px 14px;
 }
 
+.employee-detail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid #b6c0c8;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #2e536d;
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+.employee-detail-link:hover {
+  border-color: #8396a5;
+  background: #f3f6f8;
+  color: #1f465f;
+}
+
 @media (max-width: 1000px) {
   .filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

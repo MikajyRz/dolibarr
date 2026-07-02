@@ -8,9 +8,13 @@ import DashboardPage from '../pages/backoffice/DashboardPage'
 import ProductsPage from '../pages/backoffice/ProductsPage'
 import ImportPage from '../pages/backoffice/ImportPage'
 import ResetDataPage from '../pages/backoffice/ResetDataPage'
+import JoursFeriesPage from '../pages/backoffice/JoursFeriesPage'
 
+import SalariesListPage1 from '../pages/frontoffice/SalariesListPage1'
 import SalariesListPage from '../pages/frontoffice/SalariesListPage'
 import CreateSalaryPaymentPage from '../pages/frontoffice/CreateSalaryPaymentPage'
+import BulkSalaryGenerationPage from '../pages/frontoffice/BulkSalaryGenerationPage'
+import EmployeeDetailsPage from '../pages/frontoffice/EmployeeDetailsPage'
 
 import { backofficeAuthService } from '../services/backofficeAuthService'
 
@@ -25,12 +29,15 @@ const ProtectedBackofficeRoute = () => {
 function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/frontoffice/salaries" replace />} />
+      <Route path="/" element={<Navigate to="/frontoffice/salaries1" replace />} />
 
       <Route path="/frontoffice" element={<FrontofficeLayout />}>
-        <Route index element={<Navigate to="/frontoffice/salaries" replace />} />
+        <Route index element={<Navigate to="/frontoffice/salaries1" replace />} />
+        <Route path="salaries1" element={<SalariesListPage1 />} />
         <Route path="salaries" element={<SalariesListPage />} />
         <Route path="/frontoffice/salaries/create" element={<CreateSalaryPaymentPage />} />
+        <Route path="salaries/bulk-create" element={<BulkSalaryGenerationPage />} />
+        <Route path="salaries/:id" element={<EmployeeDetailsPage />} />
       </Route>
 
       <Route path="/backoffice" element={<BackofficeLogin />} />
@@ -40,6 +47,7 @@ function AppRouter() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="import" element={<ImportPage />} />
         <Route path="reset" element={<ResetDataPage />} />
+        <Route path="jours-feries" element={<JoursFeriesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/frontoffice/salaries" replace />} />

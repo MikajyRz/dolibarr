@@ -8,8 +8,10 @@ const FrontofficeLayout = () => {
         <h2>Frontoffice</h2>
 
         <nav>
+          <Link to="/frontoffice/salaries1">Liste des salariés J1</Link>
           <Link to="/frontoffice/salaries">Liste des salariés</Link>
           <Link to="/frontoffice/salaries/create">Créer un salaire</Link>
+          <Link to="/frontoffice/salaries/bulk-create">Générer plusieurs salaires</Link>
         </nav>
       </aside>
 

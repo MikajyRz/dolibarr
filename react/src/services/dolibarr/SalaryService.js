@@ -6,6 +6,7 @@ const CASH_PAYMENT_TYPE_ID = Number(
     import.meta.env.VITE_DOLIBARR_PAYMENT_TYPE_ID ||
     4,
 )
+
 const CASH_ACCOUNT_ID = Number(
   import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID ||
     import.meta.env.VITE_DOLIBARR_BANK_ACCOUNT_ID ||
@@ -50,7 +51,40 @@ const getMonthKey = (dateValue) => {
 }
 
 const isInvalidPaymentEndpointError = (error) => {
-  return String(error?.message || '').toLowerCase().includes('invalid value specified for `id`')
+  return String(error?.message || '')
+    .toLowerCase()
+    .includes('invalid value specified for `id`')
+}
+
+const isUnavailableEndpointError = (error) => {
+  const message = String(error?.message || '').toLowerCase()
+
+  return (
+    isInvalidPaymentEndpointError(error) ||
+    message.includes('not found') ||
+    message.includes('unknown api') ||
+    message.includes('404')
+  )
+}
+
+const normalizeList = (data) => {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data
+  }
+
+  if (Array.isArray(data?.records)) {
+    return data.records
+  }
+
+  if (Array.isArray(data?.rows)) {
+    return data.rows
+  }
+
+  return []
 }
 
 export const SalaryService = {
@@ -61,24 +95,30 @@ export const SalaryService = {
       sortorder: 'DESC',
     })
 
-    return Array.isArray(data) ? data : []
+    return normalizeList(data)
   },
 
   getSalaryPayments: async () => {
     try {
+      const data = await dolibarrClient.get('/salaries/getAllPayments', {
+        limit: 10000,
+        sortfield: 't.datep',
+        sortorder: 'DESC',
+      })
+
+      return normalizeList(data)
+    } catch (error) {
+      if (!isUnavailableEndpointError(error)) {
+        throw error
+      }
+
       const data = await dolibarrClient.get('/salaries/payments', {
         limit: 10000,
         sortfield: 't.datep',
         sortorder: 'DESC',
       })
 
-      return Array.isArray(data) ? data : []
-    } catch (error) {
-      if (isInvalidPaymentEndpointError(error)) {
-        return []
-      }
-
-      throw error
+      return normalizeList(data)
     }
   },
 
@@ -90,8 +130,122 @@ export const SalaryService = {
     return Number(salary?.fk_user || salary?.user_id || salary?.entity || 0)
   },
 
+  getSalaryId: (salary) => {
+    return Number(salary?.id || salary?.rowid || salary?.chid || 0)
+  },
+
+  getSalaryRef: (salary) => {
+    return String(
+      salary?.ref ||
+        salary?.ref_salary ||
+        salary?.ref_ext ||
+        salary?.label ||
+        salary?.id ||
+        '-',
+    )
+  },
+
+  getSalaryStartDate: (salary) => {
+    return salary?.datesp || salary?.date_start || salary?.date_debut || salary?.datep || null
+  },
+
+  getSalaryEndDate: (salary) => {
+    return salary?.dateep || salary?.date_end || salary?.date_fin || salary?.datev || null
+  },
+
+  getPaymentSalaryId: (payment) => {
+    if (
+      payment?.amounts &&
+      typeof payment.amounts === 'object' &&
+      !Array.isArray(payment.amounts)
+    ) {
+      const salaryIds = Object.keys(payment.amounts)
+
+      if (salaryIds.length === 1) {
+        return Number(salaryIds[0])
+      }
+    }
+
+    return Number(
+      payment?.fk_salary ||
+        payment?.salary_id ||
+        payment?.fk_salarydet ||
+        payment?.salaryid ||
+        payment?.chid ||
+        payment?.fk_salary_payment ||
+        payment?.fk_salary_paiement ||
+        payment?.fk_object ||
+        payment?.id_salary ||
+        0,
+    )
+  },
+
+  formatDate: (dateValue) => {
+    const date = getDate(dateValue)
+
+    if (!date || Number.isNaN(date.getTime())) {
+      return '-'
+    }
+
+    return date.toLocaleDateString('fr-FR')
+  },
+
+  getEmployeeSalariesWithPayments: async (employeeId) => {
+    const [salaries, payments] = await Promise.all([
+      SalaryService.getSalaries(),
+      SalaryService.getSalaryPayments(),
+    ])
+
+    const employeeSalaries = salaries.filter((salary) => {
+      return SalaryService.getSalaryUserId(salary) === Number(employeeId)
+    })
+
+    return employeeSalaries.map((salary) => {
+      const salaryId = SalaryService.getSalaryId(salary)
+
+      const salaryPayments = payments.filter((payment) => {
+        return SalaryService.getPaymentSalaryId(payment) === salaryId
+      })
+
+      const totalPaid = salaryPayments.reduce((total, payment) => {
+        return total + SalaryService.getPaymentAmountForSalary(payment, salaryId)
+      }, 0)
+
+      const amount = SalaryService.getSalaryAmount(salary)
+
+      return {
+        salary,
+        payments: salaryPayments,
+        salaryId,
+        ref: SalaryService.getSalaryRef(salary),
+        startDate: SalaryService.getSalaryStartDate(salary),
+        endDate: SalaryService.getSalaryEndDate(salary),
+        amount,
+        totalPaid,
+        remaining: amount - totalPaid,
+      }
+    })
+  },
+  
+
   getPaymentAmount: (payment) => {
     return Number(payment?.amount || payment?.total || payment?.payment_amount || 0)
+  },
+
+  getPaymentAmountForSalary: (payment, salaryId) => {
+    if (
+      payment?.amounts &&
+      typeof payment.amounts === 'object' &&
+      !Array.isArray(payment.amounts)
+    ) {
+      const amount = Number(payment.amounts[salaryId] || payment.amounts[String(salaryId)] || 0)
+
+      if (amount > 0) {
+        return amount
+      }
+    }
+
+    return SalaryService.getPaymentAmount(payment)
   },
 
   getPaymentDate: (payment) => {
@@ -124,6 +278,7 @@ export const SalaryService = {
       femme: 0,
       autre: 0,
     }
+
     const employeeById = new Map()
 
     employees.forEach((employee) => {
@@ -226,6 +381,28 @@ export const SalaryService = {
     }
   },
 
+  validateSalaryGeneration: ({ employees, datesp, dateep, amount }) => {
+    if (!employees.length) {
+      throw new Error('Aucun employé ne correspond au filtre.')
+    }
+
+    if (!datesp) {
+      throw new Error('Veuillez saisir la date de début.')
+    }
+
+    if (!dateep) {
+      throw new Error('Veuillez saisir la date de fin.')
+    }
+
+    if (new Date(datesp) > new Date(dateep)) {
+      throw new Error('La date de début ne doit pas dépasser la date de fin.')
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      throw new Error('Veuillez saisir un montant valide.')
+    }
+  },
+
   getCreatedSalaryId: (data) => {
     if (typeof data === 'number' || typeof data === 'string') {
       return data
@@ -260,7 +437,7 @@ export const SalaryService = {
       },
     }
 
-    return dolibarrClient.post(`/salaries/${salaryId}/payments`, payload)
+    return dolibarrClient.post(`/salaries/addPayment/${salaryId}`, payload)
   },
 
   createSalaryWithPayments: async (salary, payments) => {
@@ -274,5 +451,45 @@ export const SalaryService = {
     }
 
     return salaryId
+  },
+
+  generateSalariesForEmployees: async ({ employees, datesp, dateep, amount }) => {
+    SalaryService.validateSalaryGeneration({
+      employees,
+      datesp,
+      dateep,
+      amount,
+    })
+
+    const result = {
+      created: [],
+      errors: [],
+    }
+
+    for (const employee of employees) {
+      const employeeId = EmployeeService.getEmployeeId(employee)
+      const employeeName = EmployeeService.getEmployeeName(employee) || `Employé ${employeeId}`
+
+      try {
+        const salaryId = await SalaryService.createSalary({
+          fk_user: employeeId,
+          label: `Salaire ${employeeName}`,
+          amount: Number(amount),
+          datesp,
+          dateep,
+        })
+
+        result.created.push({
+          employeeId,
+          employeeName,
+          salaryId,
+          message: `Salaire généré pour ${employeeName}.`,
+        })
+      } catch (error) {
+        result.errors.push(`${employeeName} : ${error.message}`)
+      }
+    }
+
+    return result
   },
 }

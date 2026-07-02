@@ -11,6 +11,12 @@ export const EmployeeService = {
     return Array.isArray(data) ? data : []
   },
 
+  getEmployeeById: async (id) => {
+    const data = await dolibarrClient.get(`/users/${id}`)
+
+    return data || null
+  },
+
   getEmployeeRef: (employee) => {
     return String(
       employee?.ref_employee ||
@@ -27,7 +33,17 @@ export const EmployeeService = {
   },
 
   getEmployeePoste: (employee) => {
-    return `${employee?.job || ''}` 
+    return String(employee?.job || '').trim()
+  },
+
+  getEmployeeWeeklyHours: (employee) => {
+    return Number(
+      employee?.weeklyhours ||
+        employee?.weekly_hours ||
+        employee?.array_options?.options_heure_travail_semaine ||
+        employee?.array_options?.heure_travail_semaine ||
+        0,
+    )
   },
 
   getEmployeeGender: (employee) => {
@@ -59,6 +75,7 @@ export const EmployeeService = {
       modulepart: 'user',
       original_file: `${employeeId}/photos/${employee.photo}`,
     })
+
     const content = document?.content || ''
     const contentType = document?.['content-type'] || 'image/jpeg'
 
@@ -86,6 +103,37 @@ export const EmployeeService = {
         gender.includes(searchGender) &&
         login.includes(searchLogin)
       )
+    })
+  },
+
+  filterEmployeesForSalaryGeneration: (employees, filters) => {
+    const poste = String(filters.poste || '').toLowerCase()
+    const genre = String(filters.genre || '').toLowerCase()
+    const minHours = filters.minHours !== '' ? Number(filters.minHours) : null
+    const maxHours = filters.maxHours !== '' ? Number(filters.maxHours) : null
+
+    return employees.filter((employee) => {
+      const employeePoste = EmployeeService.getEmployeePoste(employee).toLowerCase()
+      const employeeGenre = EmployeeService.getEmployeeGender(employee).toLowerCase()
+      const weeklyHours = EmployeeService.getEmployeeWeeklyHours(employee)
+
+      if (poste && employeePoste !== poste) {
+        return false
+      }
+
+      if (genre && employeeGenre !== genre) {
+        return false
+      }
+
+      if (minHours !== null && weeklyHours < minHours) {
+        return false
+      }
+
+      if (maxHours !== null && weeklyHours > maxHours) {
+        return false
+      }
+
+      return true
     })
   },
 }
