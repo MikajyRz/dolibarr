@@ -18,18 +18,13 @@ const DashboardPage = () => {
     setError('')
 
     try {
-      const [employees, salaries, payments] = await Promise.all([
+      const [employees, salaries] = await Promise.all([
         EmployeeService.getEmployees(),
         SalaryService.getSalaries(),
-        SalaryService.getSalaryPayments(),
       ])
 
       setSalaryByGender(SalaryService.getSalaryAmountByGender(salaries, employees))
-      setSalaryByMonth(
-        payments.length > 0
-          ? SalaryService.getPaymentAmountByMonth(payments)
-          : SalaryService.getSalaryAmountByMonth(salaries),
-      )
+      setSalaryByMonth(SalaryService.getSalaryAmountByMonth(salaries))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -66,7 +61,7 @@ const DashboardPage = () => {
         <div>
           <p className="dashboard-kicker">Backoffice</p>
           <h1>Dashboard</h1>
-          <p>Montant des salaires par genre et paiements par mois.</p>
+          <p>Montant des salaires par genre et par mois de debut de periode.</p>
         </div>
 
         <button type="button" onClick={loadDashboard} disabled={loading}>
@@ -149,10 +144,10 @@ const DashboardPage = () => {
           <div className="dashboard-table">
             <div className="dashboard-table-header">
               <div>
-                <h2>Montant payé par mois</h2>
-                <p>Date de paiement utilisée comme référence.</p>
+                <h2>Montant de salaire par mois</h2>
+                <p>Date debut salaire utilisee comme reference.</p>
               </div>
-              <span>Données paiements</span>
+              <span>Donnees salaires</span>
             </div>
 
             <div className="table-container">
@@ -167,7 +162,7 @@ const DashboardPage = () => {
                 <tbody>
                   {salaryMonths.length === 0 && (
                     <tr>
-                      <td colSpan="2">Aucun paiement de salaire trouvé.</td>
+                      <td colSpan="2">Aucun salaire trouve.</td>
                     </tr>
                   )}
 

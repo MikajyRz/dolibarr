@@ -259,13 +259,7 @@ export const SalaryService = {
   },
 
   getSalaryMonth: (salary) => {
-    return getMonthKey(
-      salary?.datep ||
-        salary?.datev ||
-        salary?.datec ||
-        salary?.datesp ||
-        salary?.dateep,
-    )
+    return getMonthKey(SalaryService.getSalaryStartDate(salary))
   },
 
   getPaymentMonth: (payment) => {
