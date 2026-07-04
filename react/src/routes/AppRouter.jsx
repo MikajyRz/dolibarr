@@ -5,7 +5,6 @@ import FrontofficeLayout from '../components/layouts/FrontofficeLayout'
 import BackofficeLogin from '../pages/backoffice/BackofficeLogin'
 
 import DashboardPage from '../pages/backoffice/DashboardPage'
-import ProductsPage from '../pages/backoffice/ProductsPage'
 import ImportPage from '../pages/backoffice/ImportPage'
 import ResetDataPage from '../pages/backoffice/ResetDataPage'
 import JoursFeriesPage from '../pages/backoffice/JoursFeriesPage'
@@ -29,10 +28,10 @@ const ProtectedBackofficeRoute = () => {
 function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/frontoffice/salaries1" replace />} />
+      <Route path="/" element={<Navigate to="/frontoffice/salaries" replace />} />
 
       <Route path="/frontoffice" element={<FrontofficeLayout />}>
-        <Route index element={<Navigate to="/frontoffice/salaries1" replace />} />
+        <Route index element={<Navigate to="/frontoffice/salaries" replace />} />
         <Route path="salaries1" element={<SalariesListPage1 />} />
         <Route path="salaries" element={<SalariesListPage />} />
         <Route path="/frontoffice/salaries/create" element={<CreateSalaryPaymentPage />} />
@@ -44,7 +43,6 @@ function AppRouter() {
 
       <Route path="/backoffice" element={<ProtectedBackofficeRoute />}>
         <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="products" element={<ProductsPage />} />
         <Route path="import" element={<ImportPage />} />
         <Route path="reset" element={<ResetDataPage />} />
         <Route path="jours-feries" element={<JoursFeriesPage />} />

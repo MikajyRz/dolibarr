@@ -33,6 +33,14 @@ function ResetDataPage() {
       return
     }
 
+    const confirmed = window.confirm(
+      'Voulez-vous vraiment réinitialiser les données Dolibarr et SQLite ?',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
     setLoading(true)
     setError('')
     setResult(null)
@@ -58,25 +66,57 @@ function ResetDataPage() {
         <div>
           <p className="reset-kicker">Backoffice</p>
           <h1>Réinitialisation</h1>
-          <p>Paiements si disponibles, salaires, photos, puis utilisateurs sauf rowid=1.</p>
+          <p>
+            Paiements si disponibles, salaires, photos, utilisateurs sauf rowid=1,
+            puis tables SQLite.
+          </p>
         </div>
       </div>
 
       <div className="reset-card">
-        <button type="button" className="btn-outline" onClick={handlePreview} disabled={loading}>
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={handlePreview}
+          disabled={loading}
+        >
           Analyser
         </button>
 
         {preview && (
-          <div className="reset-counts">
-            <span>Paiements listés : {preview.paymentsCount}</span>
-            <span>Salaires : {preview.salariesCount}</span>
-            <span>Utilisateurs à supprimer : {preview.deletableUsersCount}</span>
-            <span>Conservés : {preview.keptUsersCount}</span>
-          </div>
+          <>
+            <div className="reset-counts">
+              <span>Paiements listés : {preview.paymentsCount}</span>
+              <span>Salaires : {preview.salariesCount}</span>
+              <span>Utilisateurs à supprimer : {preview.deletableUsersCount}</span>
+              <span>Conservés : {preview.keptUsersCount}</span>
+              <span>Données SQLite : {preview.sqlitePreview?.total || 0}</span>
+            </div>
+
+            {preview.sqlitePreview?.tables?.length > 0 && (
+              <div className="reset-counts">
+                {preview.sqlitePreview.tables.map((table) => (
+                  <span key={table.table}>
+                    {table.table} : {table.count}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {preview.sqlitePreview?.error && (
+              <p className="error">
+                SQLite : {preview.sqlitePreview.error}
+              </p>
+            )}
+          </>
         )}
 
-        <button type="button" className="danger-button" onClick={handleReset} disabled={!canReset}>
+        <button
+          type="button"
+          className="danger-button"
+          onClick={handleReset}
+          disabled={!canReset}
+        >
           {loading ? 'Traitement...' : 'Réinitialiser'}
         </button>
       </div>
@@ -95,7 +135,18 @@ function ResetDataPage() {
             <span>Photos partielles : {result.summary.photosPartial}</span>
             <span>Utilisateurs supprimés : {result.summary.usersDeleted}</span>
             <span>Utilisateurs conservés : {result.summary.usersKept}</span>
+            <span>Données SQLite supprimées : {result.summary.sqliteTotalDeleted}</span>
           </div>
+
+          {result.summary.sqliteTables?.length > 0 && (
+            <div className="reset-counts">
+              {result.summary.sqliteTables.map((table) => (
+                <span key={table.table}>
+                  {table.table} supprimés : {table.deleted}
+                </span>
+              ))}
+            </div>
+          )}
 
           {result.errors.length > 0 && (
             <div className="reset-errors">
@@ -106,6 +157,12 @@ function ResetDataPage() {
                 ))}
               </ul>
             </div>
+          )}
+
+          {result.errors.length === 0 && (
+            <p className="reset-progress">
+              Réinitialisation terminée sans erreur.
+            </p>
           )}
         </div>
       )}

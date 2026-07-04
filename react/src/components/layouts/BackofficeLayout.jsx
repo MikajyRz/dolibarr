@@ -18,7 +18,6 @@ function BackofficeLayout() {
         <nav>
           <Link to="/backoffice/dashboard">Dashboard</Link>
           <Link to="/backoffice/jours-feries">Jours fériés</Link>
-          <Link to="/backoffice/products">Produits</Link>
           <Link to="/backoffice/import">Import</Link>
           <Link to="/backoffice/reset">Réinitialisation</Link>
         </nav>
