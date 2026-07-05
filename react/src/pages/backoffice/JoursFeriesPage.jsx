@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { JourFerieService } from '../../services/backend/JourFerieService'
-// import '../../styles/jours-feries-page.css'
+import '../../styles/jours-feries-page.css'
 
 const initialForm = {
   nom: '',

@@ -40,6 +40,25 @@
   gap: 16px;
 }
 
+.salary-mode-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px;
+}
+
+.salary-mode-toggle button {
+  border-color: #b6c0c8;
+  background: #ffffff;
+  color: #2e536d;
+}
+
+.salary-mode-toggle button.active {
+  border-color: #1f5f87;
+  background: #e8f2f7;
+  color: #174965;
+}
+
 .salary-form-section {
   overflow: hidden;
 }
@@ -140,7 +159,7 @@
 
 .salary-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1px;
   overflow: hidden;
   background: var(--color-border);
@@ -168,6 +187,15 @@
 
 .salary-summary .status-danger {
   color: var(--color-danger);
+}
+
+.salary-inline-message {
+  margin: 0 16px 16px;
+  border: 1px solid #d8dde2;
+  border-radius: 6px;
+  background: #fbfcfd;
+  color: #6b7c89;
+  padding: 10px;
 }
 
 .success {
