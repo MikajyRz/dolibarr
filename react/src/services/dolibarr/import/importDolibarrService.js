@@ -2,11 +2,28 @@ import { dolibarrClient } from '../dolibarrClient'
 import { getDolibarrId, isoDateToTimestamp } from './importUtils'
 
 const CASH_PAYMENT_TYPE_ID = Number(
-  import.meta.env.VITE_DOLIBARR_CASH_PAYMENT_TYPE_ID || 4,
+  import.meta.env.VITE_DOLIBARR_CASH_PAYMENT_TYPE_ID ||
+    import.meta.env.VITE_DOLIBARR_PAYMENT_TYPE_ID ||
+    4,
 )
 const CASH_ACCOUNT_ID = Number(
-  import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID || 1,
+  import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID ||
+    import.meta.env.VITE_DOLIBARR_BANK_ACCOUNT_ID ||
+    1,
 )
+
+function isUnavailableEndpointError(error) {
+  const message = String(error?.message || '').toLowerCase()
+
+  return (
+    message.includes('invalid value specified for `id`') ||
+    message.includes('bad request') ||
+    message.includes('not found') ||
+    message.includes('unknown api') ||
+    message.includes('400') ||
+    message.includes('404')
+  )
+}
 
 function getUserRef(user) {
   return String(
@@ -24,6 +41,37 @@ function getUserLogin(user) {
 
 function getSalaryRef(salary) {
   return String(salary?.ref || salary?.ref_ext || salary?.ref_salary || '')
+}
+
+function normalizeList(data) {
+  return Array.isArray(data) ? data : []
+}
+
+function getPaymentSalaryId(payment) {
+  if (
+    payment?.amounts &&
+    typeof payment.amounts === 'object' &&
+    !Array.isArray(payment.amounts)
+  ) {
+    const salaryIds = Object.keys(payment.amounts)
+
+    if (salaryIds.length === 1) {
+      return Number(salaryIds[0])
+    }
+  }
+
+  return Number(
+    payment?.fk_salary ||
+      payment?.salary_id ||
+      payment?.fk_salarydet ||
+      payment?.salaryid ||
+      payment?.chid ||
+      payment?.fk_salary_payment ||
+      payment?.fk_salary_paiement ||
+      payment?.fk_object ||
+      payment?.id_salary ||
+      0,
+  )
 }
 
 function buildEmployeePayload(employee, withPassword = true) {
@@ -83,13 +131,29 @@ function buildPaymentPayload(payment, salaryId, salary, fkUser) {
     chid: Number(salaryId),
     fk_salary: Number(salaryId),
     fk_user: Number(fkUser),
+    paiementtype: CASH_PAYMENT_TYPE_ID,
     fk_typepayment: CASH_PAYMENT_TYPE_ID,
+    type_payment: CASH_PAYMENT_TYPE_ID,
+    paymenttype: CASH_PAYMENT_TYPE_ID,
     datepaye: paymentDate,
     accountid: CASH_ACCOUNT_ID,
+    fk_account: CASH_ACCOUNT_ID,
     num_payment: 'ESPECE',
     amounts: {
       [salaryId]: Number(payment.amount),
     },
+  }
+}
+
+async function postSalaryPayment(salaryId, payload) {
+  try {
+    return await dolibarrClient.post(`/salaries/${salaryId}/payments`, payload)
+  } catch (error) {
+    if (!isUnavailableEndpointError(error)) {
+      throw error
+    }
+
+    return dolibarrClient.post(`/salaries/addPayment/${salaryId}`, payload)
   }
 }
 
@@ -100,7 +164,7 @@ async function getAllUsers() {
     sortorder: 'ASC',
   })
 
-  return Array.isArray(users) ? users : []
+  return normalizeList(users)
 }
 
 async function getAllSalaries() {
@@ -110,7 +174,33 @@ async function getAllSalaries() {
     sortorder: 'ASC',
   })
 
-  return Array.isArray(salaries) ? salaries : []
+  return normalizeList(salaries)
+}
+
+async function getAllSalaryPayments() {
+  const params = {
+    limit: 10000,
+    sortfield: 't.datep',
+    sortorder: 'DESC',
+  }
+
+  try {
+    return normalizeList(await dolibarrClient.get('/salaries/payments', params))
+  } catch (error) {
+    if (!isUnavailableEndpointError(error)) {
+      throw error
+    }
+  }
+
+  try {
+    return normalizeList(await dolibarrClient.get('/salaries/getAllPayments', params))
+  } catch (error) {
+    if (!isUnavailableEndpointError(error)) {
+      throw error
+    }
+
+    return null
+  }
 }
 
 async function uploadEmployeeImage(image, userId) {
@@ -201,10 +291,7 @@ async function paySalary(salaryId, salary, fkUser) {
 
   for (const payment of salary.payments) {
     if (Number(payment.amount) > 0) {
-      await dolibarrClient.post(
-        `/salaries/${salaryId}/payments`,
-        buildPaymentPayload(payment, salaryId, salary, fkUser),
-      )
+      await postSalaryPayment(salaryId, buildPaymentPayload(payment, salaryId, salary, fkUser))
 
       paymentsCreated += 1
     }
@@ -222,14 +309,40 @@ async function updateSalaryPaidStatus(salaryId, salary) {
   })
 }
 
-async function createSalaryIfNotExists(salary, employeeMap, existingSalaries) {
+async function createSalaryIfNotExists(salary, employeeMap, existingSalaries, existingPayments) {
   const existingSalary = findExistingSalary(existingSalaries, salary)
 
   if (existingSalary) {
+    const salaryId = getDolibarrId(existingSalary)
+    const canCheckExistingPayments = Array.isArray(existingPayments)
+    const hasExistingPayments =
+      canCheckExistingPayments &&
+      existingPayments.some((payment) => getPaymentSalaryId(payment) === salaryId)
+
+    if (canCheckExistingPayments && !hasExistingPayments) {
+      const employeeId = employeeMap.get(salary.ref_employe)
+
+      if (!employeeId) {
+        throw new Error(`Impossible de trouver l'employÃ© ${salary.ref_employe} dans Dolibarr.`)
+      }
+
+      const paymentsCreated = await paySalary(salaryId, salary, employeeId)
+
+      await updateSalaryPaidStatus(salaryId, salary)
+
+      return {
+        status: 'paid',
+        ref_salaire: salary.ref_salaire,
+        dolibarrId: salaryId,
+        message: `Salaire ${salary.ref_salaire} existe deja, paiements ajoutes.`,
+        paymentsCreated,
+      }
+    }
+
     return {
       status: 'skipped',
       ref_salaire: salary.ref_salaire,
-      dolibarrId: getDolibarrId(existingSalary),
+      dolibarrId: salaryId,
       message: `Salaire ${salary.ref_salaire} existe déjà, ignoré.`,
       paymentsCreated: 0,
     }
@@ -307,7 +420,10 @@ export const ImportDolibarrService = {
       }
     }
 
-    const existingSalaries = await getAllSalaries()
+    const [existingSalaries, existingPayments] = await Promise.all([
+      getAllSalaries(),
+      getAllSalaryPayments(),
+    ])
 
     for (let index = 0; index < salaries.length; index += 1) {
       const salary = salaries[index]
@@ -315,7 +431,7 @@ export const ImportDolibarrService = {
       try {
         onProgress?.(`Import salaire ${index + 1}/${salaries.length} : ${salary.ref_salaire}`)
         result.salaries.push(
-          await createSalaryIfNotExists(salary, employeeMap, existingSalaries),
+          await createSalaryIfNotExists(salary, employeeMap, existingSalaries, existingPayments),
         )
       } catch (error) {
         result.errors.push(`Salaire ${salary.ref_salaire} : ${error.message}`)

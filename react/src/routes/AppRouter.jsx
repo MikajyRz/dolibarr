@@ -13,6 +13,7 @@ import SalariesListPage1 from '../pages/frontoffice/SalariesListPage1'
 import SalariesListPage from '../pages/frontoffice/SalariesListPage'
 import CreateSalaryPaymentPage from '../pages/frontoffice/CreateSalaryPaymentPage'
 import BulkSalaryGenerationPage from '../pages/frontoffice/BulkSalaryGenerationPage'
+import MonthlySalaryGenerationPage from '../pages/frontoffice/MonthlySalaryGenerationPage'
 import EmployeeDetailsPage from '../pages/frontoffice/EmployeeDetailsPage'
 
 import { backofficeAuthService } from '../services/backofficeAuthService'
@@ -36,6 +37,7 @@ function AppRouter() {
         <Route path="salaries" element={<SalariesListPage />} />
         <Route path="/frontoffice/salaries/create" element={<CreateSalaryPaymentPage />} />
         <Route path="salaries/bulk-create" element={<BulkSalaryGenerationPage />} />
+        <Route path="salaries/bulk-create-month" element={<MonthlySalaryGenerationPage />} />
         <Route path="salaries/:id" element={<EmployeeDetailsPage />} />
       </Route>
 

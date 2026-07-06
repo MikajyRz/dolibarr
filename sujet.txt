@@ -1,0 +1,14 @@
+Nouvelle page: 
+    generer salaire(parametre: mois, annee)
+        Filtrage comme dans bulksalaryGeneration
+        2champs: salaire par jour, pourcentage(majoration jour ferie)
+    
+Ex: (on genere les salaires des intervalles exclus) 
+    mois janvier: on ajoute le jour 
+    1-10(salaire existante), 11-31(calcule)
+
+    S'il y a jour ferie: ajoute le salaire par jour le pourcentage de jour ferie
+    
+
+intervalle ligne1: historique
+    

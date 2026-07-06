@@ -50,6 +50,24 @@ const getMonthKey = (dateValue) => {
   return `${year}-${String(month).padStart(2, '0')}`
 }
 
+const getDateFromSalaryLabel = (salary, index) => {
+  const text = String(
+    salary?.label ||
+      salary?.ref ||
+      salary?.ref_salary ||
+      '',
+  )
+
+  const dates = text.match(/\d{4}-\d{2}-\d{2}/g)
+
+  if (!dates || !dates[index]) {
+    return null
+  }
+
+  return dates[index]
+}
+
+
 const isInvalidPaymentEndpointError = (error) => {
   return String(error?.message || '')
     .toLowerCase()
@@ -89,7 +107,116 @@ const normalizeList = (data) => {
   return []
 }
 
+  const padDatePart = (value) => {
+    return String(value).padStart(2, '0')
+  }
+
+const buildDateValue = (year, month, day) => {
+  return `${year}-${padDatePart(month)}-${padDatePart(day)}`
+}
+
+const toDateValue = (dateValue) => {
+  const date = getDate(dateValue)
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return buildDateValue(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
+
+const addDaysToDateValue = (dateValue, days) => {
+  const date = new Date(`${dateValue}T00:00:00`)
+  date.setDate(date.getDate() + days)
+
+  return buildDateValue(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
+
+const isDateInInterval = (dateValue, startDate, endDate) => {
+  return dateValue >= startDate && dateValue <= endDate
+}
+
+const countDaysInInterval = (startDate, endDate) => {
+  let count = 0
+  let currentDate = startDate
+
+  while (currentDate <= endDate) {
+    count += 1
+    currentDate = addDaysToDateValue(currentDate, 1)
+  }
+
+  return count
+}
+
+const getMonthStartDate = (month, year) => {
+  return buildDateValue(year, month, 1)
+}
+
+const getMonthEndDate = (month, year) => {
+  const lastDay = new Date(Number(year), Number(month), 0).getDate()
+
+  return buildDateValue(year, month, lastDay)
+}
+
+const getMonthDays = (month, year) => {
+  const lastDay = new Date(Number(year), Number(month), 0).getDate()
+  const days = []
+
+  for (let day = 1; day <= lastDay; day += 1) {
+    days.push(buildDateValue(year, month, day))
+  }
+
+  return days
+}
+
+const getDateOverlap = (startDateValue, endDateValue, limitStartDate, limitEndDate) => {
+  const startDate = toDateValue(startDateValue)
+  const endDate = toDateValue(endDateValue)
+
+  if (!startDate || !endDate) {
+    return null
+  }
+
+  if (startDate > limitEndDate || endDate < limitStartDate) {
+    return null
+  }
+
+  return {
+    startDate: startDate < limitStartDate ? limitStartDate : startDate,
+    endDate: endDate > limitEndDate ? limitEndDate : endDate,
+  }
+}
+
+const groupDatesIntoIntervals = (dates) => {
+  if (!dates.length) {
+    return []
+  }
+
+  const intervals = []
+  let startDate = dates[0]
+  let endDate = dates[0]
+
+  for (let index = 1; index < dates.length; index += 1) {
+    const currentDate = dates[index]
+    const nextExpectedDate = addDaysToDateValue(endDate, 1)
+
+    if (currentDate === nextExpectedDate) {
+      endDate = currentDate
+    } else {
+      intervals.push({ startDate, endDate })
+      startDate = currentDate
+      endDate = currentDate
+    }
+  }
+
+  intervals.push({ startDate, endDate })
+
+  return intervals
+}
+
 export const SalaryService = {
+
+  
   getSalaries: async () => {
     const data = await dolibarrClient.get('/salaries', {
       limit: 10000,
@@ -153,13 +280,29 @@ export const SalaryService = {
     )
   },
 
-  getSalaryStartDate: (salary) => {
-    return salary?.datesp || salary?.date_start || salary?.date_debut || salary?.datep || null
-  },
+getSalaryStartDate: (salary) => {
+  return (
+    salary?.datesp ||
+    salary?.date_start ||
+    salary?.date_debut ||
+    salary?.period_start ||
+    salary?.periode_debut ||
+    getDateFromSalaryLabel(salary, 0) ||
+    null
+  )
+},
 
-  getSalaryEndDate: (salary) => {
-    return salary?.dateep || salary?.date_end || salary?.date_fin || salary?.datev || null
-  },
+getSalaryEndDate: (salary) => {
+  return (
+    salary?.dateep ||
+    salary?.date_end ||
+    salary?.date_fin ||
+    salary?.period_end ||
+    salary?.periode_fin ||
+    getDateFromSalaryLabel(salary, 1) ||
+    null
+  )
+},
 
   getPaymentSalaryId: (payment) => {
     if (
@@ -197,6 +340,29 @@ export const SalaryService = {
 
     return date.toLocaleDateString('fr-FR')
   },
+
+formatSalaryPeriod: (startDate, endDate) => {
+  const start = SalaryService.formatDate(startDate)
+  const end = SalaryService.formatDate(endDate)
+
+  if (start === '-' && end === '-') {
+    return '-'
+  }
+
+  if (start !== '-' && end === '-') {
+    return start
+  }
+
+  if (start === '-' && end !== '-') {
+    return end
+  }
+
+  if (start === end) {
+    return start
+  }
+
+  return `${start} au ${end}`
+},
 
   getEmployeeSalariesWithPayments: async (employeeId) => {
     const [salaries, payments] = await Promise.all([
@@ -555,4 +721,140 @@ export const SalaryService = {
 
     return result
   },
+
+  validateMonthlySalaryGeneration: ({ employees, month, year, dailySalary, holidayPercent }) => {
+    const monthNumber = Number(month)
+    const yearNumber = Number(year)
+    const dailySalaryNumber = Number(dailySalary)
+    const holidayPercentNumber = Number(holidayPercent || 0)
+
+    if (!employees.length) {
+      throw new Error('Aucun employé ne correspond au filtre.')
+    }
+
+    if (!monthNumber || monthNumber < 1 || monthNumber > 12) {
+      throw new Error('Veuillez choisir un mois valide.')
+    }
+
+    if (!yearNumber || yearNumber < 2000) {
+      throw new Error('Veuillez saisir une année valide.')
+    }
+
+    if (!dailySalaryNumber || dailySalaryNumber <= 0) {
+      throw new Error('Veuillez saisir un salaire par jour valide.')
+    }
+
+    if (holidayPercentNumber < 0) {
+      throw new Error('Le pourcentage de majoration ne doit pas être négatif.')
+    }
+  },
+
+  generateMonthlySalariesForEmployees: async ({
+    employees,
+    month,
+    year,
+    dailySalary,
+    holidayPercent,
+    holidays,
+  }) => {
+    SalaryService.validateMonthlySalaryGeneration({
+      employees,
+      month,
+      year,
+      dailySalary,
+      holidayPercent,
+    })
+
+    const monthNumber = Number(month)
+    const yearNumber = Number(year)
+    const dailySalaryNumber = Number(dailySalary)
+    const holidayPercentNumber = Number(holidayPercent || 0)
+
+    const monthStartDate = getMonthStartDate(monthNumber, yearNumber)
+    const monthEndDate = getMonthEndDate(monthNumber, yearNumber)
+    const monthDays = getMonthDays(monthNumber, yearNumber)
+
+    const monthHolidays = holidays.filter((holiday) => {
+      return holiday.date >= monthStartDate && holiday.date <= monthEndDate
+    })
+
+    const salaries = await SalaryService.getSalaries()
+
+    const result = {
+      created: [],
+      skipped: [],
+      errors: [],
+    }
+
+    for (const employee of employees) {
+      const employeeId = EmployeeService.getEmployeeId(employee)
+      const employeeName = EmployeeService.getEmployeeName(employee) || `Employé ${employeeId}`
+
+      try {
+        const employeeSalaries = salaries.filter((salary) => {
+          return SalaryService.getSalaryUserId(salary) === employeeId
+        })
+
+        const existingIntervals = employeeSalaries
+          .map((salary) => {
+            return getDateOverlap(
+              SalaryService.getSalaryStartDate(salary),
+              SalaryService.getSalaryEndDate(salary),
+              monthStartDate,
+              monthEndDate,
+            )
+          })
+          .filter(Boolean)
+
+        const daysToGenerate = monthDays.filter((day) => {
+          return !existingIntervals.some((interval) => {
+            return isDateInInterval(day, interval.startDate, interval.endDate)
+          })
+        })
+
+        const intervalsToGenerate = groupDatesIntoIntervals(daysToGenerate)
+
+        if (!intervalsToGenerate.length) {
+          result.skipped.push(`${employeeName} : tout le mois a déjà un salaire.`)
+          continue
+        }
+
+        for (const interval of intervalsToGenerate) {
+          const daysCount = countDaysInInterval(interval.startDate, interval.endDate)
+
+          const holidayCount = monthHolidays.filter((holiday) => {
+            return isDateInInterval(holiday.date, interval.startDate, interval.endDate)
+          }).length
+
+          const baseAmount = daysCount * dailySalaryNumber
+          const holidayBonus = (holidayCount * dailySalaryNumber * holidayPercentNumber) / 100
+          const amount = Math.round(baseAmount + holidayBonus)
+
+          const salaryId = await SalaryService.createSalary({
+            fk_user: employeeId,
+            label: `Salaire ${employeeName} - ${interval.startDate} au ${interval.endDate}`,
+            amount,
+            datesp: interval.startDate,
+            dateep: interval.endDate,
+          })
+
+          result.created.push({
+            employeeId,
+            employeeName,
+            salaryId,
+            startDate: interval.startDate,
+            endDate: interval.endDate,
+            daysCount,
+            holidayCount,
+            amount,
+            message: `${employeeName} : salaire généré du ${interval.startDate} au ${interval.endDate} (${amount.toLocaleString()} Ar).`,
+          })
+        }
+      } catch (error) {
+        result.errors.push(`${employeeName} : ${error.message}`)
+      }
+    }
+
+    return result
+  }
 }
