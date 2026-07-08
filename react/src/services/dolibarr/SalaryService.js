@@ -856,5 +856,211 @@ formatSalaryPeriod: (startDate, endDate) => {
     }
 
     return result
+  },
+
+  validateSalaryPaymentGeneration: ({ employees, month, year, amount, priorityPoste }) => {
+    const monthNumber = Number(month)
+    const yearNumber = Number(year)
+    const amountNumber = Number(amount)
+
+    if (!employees.length) {
+      throw new Error('Aucun employé ne correspond au filtre.')
+    }
+
+    if (!monthNumber || monthNumber < 1 || monthNumber > 12) {
+      throw new Error('Veuillez choisir un mois valide.')
+    }
+
+    if (!yearNumber || yearNumber < 2000) {
+      throw new Error('Veuillez saisir une année valide.')
+    }
+
+    if (!priorityPoste) {
+      throw new Error('Veuillez choisir le poste prioritaire.')
+    }
+
+    if (!amountNumber || amountNumber <= 0) {
+      throw new Error('Veuillez saisir un montant de paiement valide.')
+    }
+  },
+
+  getSalariesToPayByOrder: async ({ employees, month, year, priorityPoste }) => {
+    const monthNumber = Number(month)
+    const yearNumber = Number(year)
+    const priority = String(priorityPoste || '').toLowerCase()
+    const monthStartDate = getMonthStartDate(monthNumber, yearNumber)
+    const monthEndDate = getMonthEndDate(monthNumber, yearNumber)
+
+    const employeeById = new Map()
+
+    employees.forEach((employee) => {
+      const employeeId = EmployeeService.getEmployeeId(employee)
+
+      if (employeeId) {
+        employeeById.set(employeeId, employee)
+      }
+    })
+
+    const [salaries, payments] = await Promise.all([
+      SalaryService.getSalaries(),
+      SalaryService.getSalaryPayments(),
+    ])
+
+    const paidBySalaryId = new Map()
+
+    payments.forEach((payment) => {
+      if (
+        payment?.amounts &&
+        typeof payment.amounts === 'object' &&
+        !Array.isArray(payment.amounts)
+      ) {
+        Object.entries(payment.amounts).forEach(([salaryId, amount]) => {
+          const id = Number(salaryId)
+          const paid = Number(amount || 0)
+
+          if (id && paid > 0) {
+            paidBySalaryId.set(id, (paidBySalaryId.get(id) || 0) + paid)
+          }
+        })
+
+        return
+      }
+
+      const salaryId = SalaryService.getPaymentSalaryId(payment)
+      const paid = SalaryService.getPaymentAmount(payment)
+
+      if (salaryId && paid > 0) {
+        paidBySalaryId.set(salaryId, (paidBySalaryId.get(salaryId) || 0) + paid)
+      }
+    })
+
+    const salariesToPay = salaries
+      .map((salary) => {
+        const salaryId = SalaryService.getSalaryId(salary)
+        const employeeId = SalaryService.getSalaryUserId(salary)
+        const employee = employeeById.get(employeeId)
+        const startDate = toDateValue(SalaryService.getSalaryStartDate(salary))
+        const endDate = toDateValue(SalaryService.getSalaryEndDate(salary))
+        const amount = SalaryService.getSalaryAmount(salary)
+        const totalPaid = paidBySalaryId.get(salaryId) || 0
+        const remaining = amount - totalPaid
+        const poste = EmployeeService.getEmployeePoste(employee || {})
+
+        return {
+          salary,
+          salaryId,
+          employeeId,
+          employee,
+          employeeName: EmployeeService.getEmployeeName(employee || {}) || `Employé ${employeeId}`,
+          poste,
+          startDate,
+          endDate,
+          amount,
+          totalPaid,
+          remaining,
+          isPriority: String(poste || '').toLowerCase() === priority,
+        }
+      })
+      .filter((item) => {
+        return (
+          item.salaryId &&
+          item.employee &&
+          item.startDate &&
+          item.startDate >= monthStartDate &&
+          item.startDate <= monthEndDate &&
+          item.remaining > 0
+        )
+      })
+
+    return salariesToPay.sort((a, b) => {
+      if (a.isPriority !== b.isPriority) {
+        return a.isPriority ? -1 : 1
+      }
+
+      if (a.startDate !== b.startDate) {
+        return a.startDate.localeCompare(b.startDate)
+      }
+
+      return a.employeeName.localeCompare(b.employeeName)
+    })
+  },
+
+  generatePaymentsByOrder: async ({ employees, month, year, priorityPoste, amount }) => {
+    SalaryService.validateSalaryPaymentGeneration({
+      employees,
+      month,
+      year,
+      amount,
+      priorityPoste,
+    })
+
+    const salariesToPay = await SalaryService.getSalariesToPayByOrder({
+      employees,
+      month,
+      year,
+      priorityPoste,
+    })
+
+    if (!salariesToPay.length) {
+      throw new Error('Aucun salaire avec reste à payer pour ce mois et ces filtres.')
+    }
+
+    let remainingBudget = Number(amount)
+
+    const result = {
+      budget: Number(amount),
+      totalPaid: 0,
+      remainingBudget: Number(amount),
+      paid: [],
+      skipped: [],
+      errors: [],
+    }
+
+    const today = new Date()
+    const paymentDate = buildDateValue(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      today.getDate(),
+    )
+
+    for (const item of salariesToPay) {
+      if (remainingBudget <= 0) {
+        result.skipped.push(
+          `${item.employeeName} : budget terminé, salaire non payé.`,
+        )
+        continue
+      }
+
+      const amountToPay = Math.min(item.remaining, remainingBudget)
+
+      try {
+        await SalaryService.paySalary(item.salaryId, {
+          amount: amountToPay,
+          datepaye: paymentDate,
+          num_payment: 'ESPECE',
+        })
+
+        remainingBudget -= amountToPay
+        result.totalPaid += amountToPay
+
+        result.paid.push({
+          salaryId: item.salaryId,
+          employeeId: item.employeeId,
+          employeeName: item.employeeName,
+          poste: item.poste,
+          startDate: item.startDate,
+          endDate: item.endDate,
+          amountPaid: amountToPay,
+          remainingBeforePayment: item.remaining,
+          isPartial: amountToPay < item.remaining,
+        })
+      } catch (error) {
+        result.errors.push(`${item.employeeName} : ${error.message}`)
+      }
+    }
+
+    result.remainingBudget = remainingBudget
+
+    return result
   }
 }

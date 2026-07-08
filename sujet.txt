@@ -11,4 +11,11 @@ Ex: (on genere les salaires des intervalles exclus)
     
 
 intervalle ligne1: historique
+
+
+
+
+
+
+
     
