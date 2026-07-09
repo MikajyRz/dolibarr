@@ -83,7 +83,7 @@ function buildPaymentPayload(payment, salaryId, salary, fkUser) {
     chid: Number(salaryId),
     fk_salary: Number(salaryId),
     fk_user: Number(fkUser),
-    fk_typepayment: CASH_PAYMENT_TYPE_ID,
+    paiementtype: CASH_PAYMENT_TYPE_ID,
     datepaye: paymentDate,
     accountid: CASH_ACCOUNT_ID,
     num_payment: 'ESPECE',

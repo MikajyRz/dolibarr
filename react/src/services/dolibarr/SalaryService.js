@@ -61,10 +61,8 @@ const isUnavailableEndpointError = (error) => {
 
   return (
     isInvalidPaymentEndpointError(error) ||
-    message.includes('bad request') ||
     message.includes('not found') ||
     message.includes('unknown api') ||
-    message.includes('400') ||
     message.includes('404')
   )
 }
@@ -101,24 +99,12 @@ export const SalaryService = {
   },
 
   getSalaryPayments: async () => {
-    const params = {
-      limit: 10000,
-      sortfield: 't.datep',
-      sortorder: 'DESC',
-    }
-
     try {
-      const data = await dolibarrClient.get('/salaries/payments', params)
-
-      return normalizeList(data)
-    } catch (error) {
-      if (!isUnavailableEndpointError(error)) {
-        throw error
-      }
-    }
-
-    try {
-      const data = await dolibarrClient.get('/salaries/getAllPayments', params)
+      const data = await dolibarrClient.get('/salaries/getAllPayments', {
+        limit: 10000,
+        sortfield: 't.datep',
+        sortorder: 'DESC',
+      })
 
       return normalizeList(data)
     } catch (error) {
@@ -126,7 +112,13 @@ export const SalaryService = {
         throw error
       }
 
-      return []
+      const data = await dolibarrClient.get('/salaries/payments', {
+        limit: 10000,
+        sortfield: 't.datep',
+        sortorder: 'DESC',
+      })
+
+      return normalizeList(data)
     }
   },
 
@@ -383,42 +375,6 @@ export const SalaryService = {
     }
   },
 
-  validateExistingSalaryPayment: (salaryHistory, payments) => {
-    const validPayments = SalaryService.getValidPayments(payments)
-    const totalPaid = SalaryService.getTotalPaid(validPayments)
-    const remainingAmount = Number(salaryHistory?.remaining || 0)
-
-    if (!salaryHistory?.salaryId) {
-      throw new Error('Veuillez choisir un salaire existant.')
-    }
-
-    if (remainingAmount <= 0) {
-      throw new Error('Ce salaire est déjà totalement payé.')
-    }
-
-    if (validPayments.length === 0) {
-      throw new Error('Veuillez ajouter au moins un paiement.')
-    }
-
-    for (const payment of validPayments) {
-      if (!payment.datepaye) {
-        throw new Error('Chaque paiement doit avoir une date de règlement.')
-      }
-    }
-
-    if (!CASH_PAYMENT_TYPE_ID) {
-      throw new Error("L'ID du mode de paiement espèces est manquant.")
-    }
-
-    if (!CASH_ACCOUNT_ID) {
-      throw new Error("L'ID du compte caisse est manquant.")
-    }
-
-    if (totalPaid > remainingAmount) {
-      throw new Error('Le montant payé ne doit pas dépasser le reste à payer.')
-    }
-  },
-
   validateSalaryGeneration: ({ employees, datesp, dateep, amount }) => {
     if (!employees.length) {
       throw new Error('Aucun employé ne correspond au filtre.')
@@ -466,41 +422,16 @@ export const SalaryService = {
   paySalary: async (salaryId, payment) => {
     const payload = {
       chid: Number(salaryId),
-      fk_salary: Number(salaryId),
       datepaye: toTimestamp(payment.datepaye),
       paiementtype: CASH_PAYMENT_TYPE_ID,
-      fk_typepayment: CASH_PAYMENT_TYPE_ID,
-      type_payment: CASH_PAYMENT_TYPE_ID,
-      paymenttype: CASH_PAYMENT_TYPE_ID,
       accountid: CASH_ACCOUNT_ID,
-      fk_account: CASH_ACCOUNT_ID,
       num_payment: payment.num_payment || 'ESPECE',
       amounts: {
         [salaryId]: Number(payment.amount),
       },
     }
 
-    try {
-      return await dolibarrClient.post(`/salaries/${salaryId}/payments`, payload)
-    } catch (error) {
-      if (!isUnavailableEndpointError(error)) {
-        throw error
-      }
-
-      return dolibarrClient.post(`/salaries/addPayment/${salaryId}`, payload)
-    }
-  },
-
-  payExistingSalary: async (salaryHistory, payments) => {
-    SalaryService.validateExistingSalaryPayment(salaryHistory, payments)
-
-    const validPayments = SalaryService.getValidPayments(payments)
-
-    for (const payment of validPayments) {
-      await SalaryService.paySalary(salaryHistory.salaryId, payment)
-    }
-
-    return salaryHistory.salaryId
+    return dolibarrClient.post(`/salaries/addPayment/${salaryId}`, payload)
   },
 
   createSalaryWithPayments: async (salary, payments) => {

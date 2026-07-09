@@ -1,38 +1,14 @@
 import { dolibarrClient } from './dolibarrClient'
 
-const isSuperAdminUser = (user) => {
-  const login = String(user?.login || '').trim().toLowerCase()
-  const lastname = String(user?.lastname || '').trim().toLowerCase()
-  const firstname = String(user?.firstname || '').trim().toLowerCase()
-  const fullName = `${firstname} ${lastname}`.trim()
-  const reversedFullName = `${lastname} ${firstname}`.trim()
-  const isAdmin = Number(user?.admin || 0) === 1
-
-  return (
-    isAdmin ||
-    login === 'superadmin' ||
-    login === 'admin' ||
-    lastname.includes('superadmin') ||
-    firstname.includes('superadmin') ||
-    fullName.includes('superadmin') ||
-    reversedFullName.includes('superadmin')
-  )
-}
-
 export const EmployeeService = {
   getEmployees: async () => {
     const data = await dolibarrClient.get('/users', {
       limit: 10000,
       sortfield: 't.lastname',
       sortorder: 'ASC',
-      sqlfilters: '(t.employee:=:1)',
     })
 
-    return Array.isArray(data)
-      ? data.filter((user) => {
-          return Number(user?.employee || 0) === 1 && !isSuperAdminUser(user)
-        })
-      : []
+    return Array.isArray(data) ? data : []
   },
 
   getEmployeeById: async (id) => {
