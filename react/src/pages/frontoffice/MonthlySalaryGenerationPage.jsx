@@ -7,6 +7,9 @@ import '../../styles/bulk-salary-generation-page.css'
 
 const currentDate = new Date()
 
+const toArray = (value) => Array.isArray(value) ? value : []
+const hasInvalidHourRange = ({ minHours, maxHours }) => minHours !== '' && maxHours !== '' && Number(minHours) > Number(maxHours)
+
 const initialFilters = {
   poste: '',
   genre: '',
@@ -55,13 +58,10 @@ function MonthlySalaryGenerationPage() {
         setError('')
 
         try {
-            const [employeesData, holidaysData] = await Promise.all([
-                EmployeeService.getEmployees(),
-                JourFerieService.getAll(),
-            ])
+            const [employeesData, holidaysData] = await Promise.all([EmployeeService.getEmployees(), JourFerieService.getAll()])
 
-            setEmployees(Array.isArray(employeesData) ? employeesData : [])
-            setHolidays(Array.isArray(holidaysData) ? holidaysData : [])
+            setEmployees(toArray(employeesData))
+            setHolidays(toArray(holidaysData))
         } catch (err) {
             setError(err.message)
         } finally {
@@ -116,18 +116,12 @@ function MonthlySalaryGenerationPage() {
     setError('')
     setResult(null)
 
-    if (
-      filters.minHours !== '' &&
-      filters.maxHours !== '' &&
-      Number(filters.minHours) > Number(filters.maxHours)
-    ) {
+    if (hasInvalidHourRange(filters)) {
       setError("L'heure minimum ne doit pas dépasser l'heure maximum.")
       return
     }
 
-    const confirmed = window.confirm(
-      `Voulez-vous générer les salaires pour ${filteredEmployees.length} salarié(s) ?`,
-    )
+    const confirmed = window.confirm(`Voulez-vous générer les salaires pour ${filteredEmployees.length} salarié(s) ?`)
 
     if (!confirmed) {
       return
@@ -136,17 +130,7 @@ function MonthlySalaryGenerationPage() {
     setGenerating(true)
 
     try {
-      const data = await SalaryService.generateMonthlySalariesForEmployees({
-        employees: filteredEmployees,
-        month: generation.month,
-        year: generation.year,
-        dailySalary: generation.dailySalary,
-        holidayPercent: generation.holidayPercent,
-        weekendPercent: generation.weekendPercent,
-        includeSaturday: generation.includeSaturday,
-        includeSunday: generation.includeSunday,
-        holidays,
-      })
+      const data = await SalaryService.generateMonthlySalariesForEmployees({ employees: filteredEmployees, month: generation.month, year: generation.year, dailySalary: generation.dailySalary, holidayPercent: generation.holidayPercent, weekendPercent: generation.weekendPercent, includeSaturday: generation.includeSaturday, includeSunday: generation.includeSunday, holidays })
 
       setResult(data)
     } catch (err) {

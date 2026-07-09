@@ -1,17 +1,45 @@
 import { dolibarrClient } from './dolibarrClient'
 import { EmployeeService } from './EmployeeService'
 
-const CASH_PAYMENT_TYPE_ID = Number(
-  import.meta.env.VITE_DOLIBARR_CASH_PAYMENT_TYPE_ID ||
-    import.meta.env.VITE_DOLIBARR_PAYMENT_TYPE_ID ||
-    4,
-)
+const CASH_PAYMENT_TYPE_ID = Number(import.meta.env.VITE_DOLIBARR_CASH_PAYMENT_TYPE_ID || import.meta.env.VITE_DOLIBARR_PAYMENT_TYPE_ID || 4)
 
-const CASH_ACCOUNT_ID = Number(
-  import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID ||
-    import.meta.env.VITE_DOLIBARR_BANK_ACCOUNT_ID ||
-    1,
-)
+const CASH_ACCOUNT_ID = Number(import.meta.env.VITE_DOLIBARR_CASH_ACCOUNT_ID || import.meta.env.VITE_DOLIBARR_BANK_ACCOUNT_ID || 1)
+
+const toNumber = (value, fallback = 0) => Number(value || fallback)
+const toText = (value, fallback = '') => String(value || fallback)
+
+const validateEmployees = (employees) => {
+  if (!employees.length) {
+    throw new Error('Aucun employÃ© ne correspond au filtre.')
+  }
+}
+
+const validateMonthYear = (month, year) => {
+  const monthNumber = toNumber(month)
+  const yearNumber = toNumber(year)
+
+  if (!monthNumber || monthNumber < 1 || monthNumber > 12) {
+    throw new Error('Veuillez choisir un mois valide.')
+  }
+
+  if (!yearNumber || yearNumber < 2000) {
+    throw new Error('Veuillez saisir une annÃ©e valide.')
+  }
+}
+
+const validatePositiveNumber = (value, message) => {
+  const valueNumber = toNumber(value)
+
+  if (!valueNumber || valueNumber <= 0) {
+    throw new Error(message)
+  }
+}
+
+const validateNotNegativeNumber = (value, message) => {
+  if (toNumber(value) < 0) {
+    throw new Error(message)
+  }
+}
 
 const toTimestamp = (dateValue) => {
   if (!dateValue) {
@@ -21,17 +49,15 @@ const toTimestamp = (dateValue) => {
   return Math.floor(new Date(dateValue).getTime() / 1000)
 }
 
-const getObjectId = (item) => {
-  return Number(item?.id || item?.rowid || item?.fk_user || 0)
-}
+const getObjectId = (item) => toNumber(item?.id || item?.rowid || item?.fk_user)
 
 const getDate = (dateValue) => {
   if (!dateValue || dateValue === '0') {
     return null
   }
 
-  if (typeof dateValue === 'number' || /^\d+$/.test(String(dateValue))) {
-    return new Date(Number(dateValue) * 1000)
+  if (typeof dateValue === 'number' || /^\d+$/.test(toText(dateValue))) {
+    return new Date(toNumber(dateValue) * 1000)
   }
 
   return new Date(dateValue)
@@ -47,16 +73,11 @@ const getMonthKey = (dateValue) => {
   const month = date.getMonth() + 1
   const year = date.getFullYear()
 
-  return `${year}-${String(month).padStart(2, '0')}`
+  return `${year}-${toText(month).padStart(2, '0')}`
 }
 
 const getDateFromSalaryLabel = (salary, index) => {
-  const text = String(
-    salary?.label ||
-      salary?.ref ||
-      salary?.ref_salary ||
-      '',
-  )
+  const text = toText(salary?.label || salary?.ref || salary?.ref_salary)
 
   const dates = text.match(/\d{4}-\d{2}-\d{2}/g)
 
@@ -69,13 +90,13 @@ const getDateFromSalaryLabel = (salary, index) => {
 
 
 const isInvalidPaymentEndpointError = (error) => {
-  return String(error?.message || '')
+  return toText(error?.message)
     .toLowerCase()
     .includes('invalid value specified for `id`')
 }
 
 const isUnavailableEndpointError = (error) => {
-  const message = String(error?.message || '').toLowerCase()
+  const message = toText(error?.message).toLowerCase()
 
   return (
     isInvalidPaymentEndpointError(error) ||
@@ -108,7 +129,7 @@ const normalizeList = (data) => {
 }
 
   const padDatePart = (value) => {
-    return String(value).padStart(2, '0')
+    return toText(value).padStart(2, '0')
   }
 
 const buildDateValue = (year, month, day) => {
@@ -136,7 +157,7 @@ const isDateInInterval = (dateValue, startDate, endDate) => {
   return dateValue >= startDate && dateValue <= endDate
 }
 
-//6
+//6 recoit date et retourne jour 0=dim, 6=
 const getDayOfWeek = (dateValue) => {
   const date = new Date(`${dateValue}T00:00:00`)
   return date.getDay()
@@ -163,30 +184,30 @@ const getDatesInInterval = (startDate, endDate) => {
   return dates
 }
 
-const countDaysInInterval = (startDate, endDate) => {
-  let count = 0
-  let currentDate = startDate
+// const countDaysInInterval = (startDate, endDate) => {
+//   let count = 0
+//   let currentDate = startDate
 
-  while (currentDate <= endDate) {
-    count += 1
-    currentDate = addDaysToDateValue(currentDate, 1)
-  }
+//   while (currentDate <= endDate) {
+//     count += 1
+//     currentDate = addDaysToDateValue(currentDate, 1)
+//   }
 
-  return count
-}
+//   return count
+// }
 
 const getMonthStartDate = (month, year) => {
   return buildDateValue(year, month, 1)
 }
 
 const getMonthEndDate = (month, year) => {
-  const lastDay = new Date(Number(year), Number(month), 0).getDate()
+  const lastDay = new Date(toNumber(year), toNumber(month), 0).getDate()
 
   return buildDateValue(year, month, lastDay)
 }
 
 const getMonthDays = (month, year) => {
-  const lastDay = new Date(Number(year), Number(month), 0).getDate()
+  const lastDay = new Date(toNumber(year), toNumber(month), 0).getDate()
   const days = []
 
   for (let day = 1; day <= lastDay; day += 1) {
@@ -242,15 +263,7 @@ const groupDatesIntoIntervals = (dates) => {
 }
 
 //1
-const calculateMonthlySalaryAmount = ({
-  dates,
-  dailySalary,
-  holidayDates,
-  holidayPercent,
-  includeSaturday,
-  includeSunday,
-  weekendPercent,
-}) => {
+const calculateMonthlySalaryAmount = ({ dates, dailySalary, holidayDates, holidayPercent, includeSaturday, includeSunday, weekendPercent }) => {
   let amount = 0
   let holidayCount = 0
   let saturdayCount = 0
@@ -300,6 +313,156 @@ const calculateMonthlySalaryAmount = ({
   }
 }
 
+const getMonthlySalaryContext = ({ month, year, dailySalary, holidayPercent, holidays, weekendPercent, includeSaturday, includeSunday }) => {
+  const monthNumber = toNumber(month)
+  const yearNumber = toNumber(year)
+  const monthStartDate = getMonthStartDate(monthNumber, yearNumber)
+  const monthEndDate = getMonthEndDate(monthNumber, yearNumber)
+  const monthHolidays = holidays.filter((holiday) => holiday.date >= monthStartDate && holiday.date <= monthEndDate)
+
+  return {
+    monthStartDate,
+    monthEndDate,
+    monthDays: getMonthDays(monthNumber, yearNumber),
+    dailySalary: toNumber(dailySalary),
+    holidayPercent: toNumber(holidayPercent),
+    weekendPercent: toNumber(weekendPercent),
+    includeSaturday: Boolean(includeSaturday),
+    includeSunday: Boolean(includeSunday),
+    holidayDates: new Set(monthHolidays.map((holiday) => holiday.date)),
+  }
+}
+
+const getEmployeeSalaryIntervals = ({ salaries, employeeId, monthStartDate, monthEndDate }) => {
+  return salaries
+    .filter((salary) => SalaryService.getSalaryUserId(salary) === employeeId)
+    .map((salary) => getDateOverlap(SalaryService.getSalaryStartDate(salary), SalaryService.getSalaryEndDate(salary), monthStartDate, monthEndDate))
+    .filter(Boolean)
+}
+
+const getIntervalsToGenerate = ({ monthDays, existingIntervals }) => {
+  const daysToGenerate = monthDays.filter((day) => {
+    return !existingIntervals.some((interval) => isDateInInterval(day, interval.startDate, interval.endDate))
+  })
+
+  return groupDatesIntoIntervals(daysToGenerate)
+}
+
+const createMonthlySalaryForInterval = async ({ employeeId, employeeName, interval, context }) => {
+  const intervalDates = getDatesInInterval(interval.startDate, interval.endDate)
+  const salaryCalculation = calculateMonthlySalaryAmount({ dates: intervalDates, dailySalary: context.dailySalary, holidayDates: context.holidayDates, holidayPercent: context.holidayPercent, includeSaturday: context.includeSaturday, includeSunday: context.includeSunday, weekendPercent: context.weekendPercent })
+  const salaryId = await SalaryService.createSalary({ fk_user: employeeId, label: `Salaire ${employeeName} - ${interval.startDate} au ${interval.endDate}`, amount: salaryCalculation.amount, datesp: interval.startDate, dateep: interval.endDate })
+
+  return {
+    employeeId,
+    employeeName,
+    salaryId,
+    startDate: interval.startDate,
+    endDate: interval.endDate,
+    daysCount: intervalDates.length,
+    ...salaryCalculation,
+    message: `${employeeName} : salaire généré du ${interval.startDate} au ${interval.endDate} (${salaryCalculation.amount.toLocaleString()} Ar).`,
+  }
+}
+
+const buildEmployeeById = (employees) => {
+  const employeeById = new Map()
+
+  employees.forEach((employee) => {
+    const employeeId = EmployeeService.getEmployeeId(employee)
+
+    if (employeeId) {
+      employeeById.set(employeeId, employee)
+    }
+  })
+
+  return employeeById
+}
+
+const addPaidAmount = (paidBySalaryId, salaryId, paid) => {
+  if (salaryId && paid > 0) {
+    paidBySalaryId.set(salaryId, (paidBySalaryId.get(salaryId) || 0) + paid)
+  }
+}
+
+const buildPaidBySalaryId = (payments) => {
+  const paidBySalaryId = new Map()
+
+  payments.forEach((payment) => {
+    if (payment?.amounts && typeof payment.amounts === 'object' && !Array.isArray(payment.amounts)) {
+      Object.entries(payment.amounts).forEach(([salaryId, amount]) => addPaidAmount(paidBySalaryId, toNumber(salaryId), toNumber(amount)))
+      return
+    }
+
+    addPaidAmount(paidBySalaryId, SalaryService.getPaymentSalaryId(payment), SalaryService.getPaymentAmount(payment))
+  })
+
+  return paidBySalaryId
+}
+
+const buildSalaryToPayItem = ({ salary, employeeById, paidBySalaryId, priority }) => {
+  const salaryId = SalaryService.getSalaryId(salary)
+  const employeeId = SalaryService.getSalaryUserId(salary)
+  const employee = employeeById.get(employeeId)
+  const amount = SalaryService.getSalaryAmount(salary)
+  const totalPaid = paidBySalaryId.get(salaryId) || 0
+  const poste = EmployeeService.getEmployeePoste(employee || {})
+
+  return {
+    salary,
+    salaryId,
+    employeeId,
+    employee,
+    employeeName: EmployeeService.getEmployeeName(employee || {}) || `Employé ${employeeId}`,
+    poste,
+    startDate: toDateValue(SalaryService.getSalaryStartDate(salary)),
+    endDate: toDateValue(SalaryService.getSalaryEndDate(salary)),
+    amount,
+    totalPaid,
+    remaining: amount - totalPaid,
+    isPriority: toText(poste).toLowerCase() === priority,
+  }
+}
+
+const isPayableSalaryInMonth = ({ item, monthStartDate, monthEndDate }) => {
+  return item.salaryId && item.employee && item.startDate && item.startDate >= monthStartDate && item.startDate <= monthEndDate && item.remaining > 0
+}
+
+const sortSalaryToPayItems = (a, b) => {
+  if (a.isPriority !== b.isPriority) {
+    return a.isPriority ? -1 : 1
+  }
+
+  if (a.startDate !== b.startDate) {
+    return a.startDate.localeCompare(b.startDate)
+  }
+
+  return a.employeeName.localeCompare(b.employeeName)
+}
+
+const createPaymentResult = (amount) => ({ budget: toNumber(amount), totalPaid: 0, remainingBudget: toNumber(amount), paid: [], skipped: [], errors: [] })
+
+const getTodayDateValue = () => {
+  const today = new Date()
+  return buildDateValue(today.getFullYear(), today.getMonth() + 1, today.getDate())
+}
+
+const paySalaryItem = async ({ item, amountToPay, paymentDate }) => {
+  await SalaryService.paySalary(item.salaryId, { amount: amountToPay, datepaye: paymentDate, num_payment: 'ESPECE' })
+
+  return {
+    salaryId: item.salaryId,
+    employeeId: item.employeeId,
+    employeeName: item.employeeName,
+    poste: item.poste,
+    startDate: item.startDate,
+    endDate: item.endDate,
+    amountPaid: amountToPay,
+    remainingBeforePayment: item.remaining,
+    isPartial: amountToPay < item.remaining,
+  }
+}
+
 export const SalaryService = {
 
   
@@ -344,26 +507,19 @@ export const SalaryService = {
   },
 
   getSalaryAmount: (salary) => {
-    return Number(salary?.amount || salary?.salary || salary?.total || 0)
+    return toNumber(salary?.amount || salary?.salary || salary?.total)
   },
 
   getSalaryUserId: (salary) => {
-    return Number(salary?.fk_user || salary?.user_id || salary?.entity || 0)
+    return toNumber(salary?.fk_user || salary?.user_id || salary?.entity)
   },
 
   getSalaryId: (salary) => {
-    return Number(salary?.id || salary?.rowid || salary?.chid || 0)
+    return toNumber(salary?.id || salary?.rowid || salary?.chid)
   },
 
   getSalaryRef: (salary) => {
-    return String(
-      salary?.ref ||
-        salary?.ref_salary ||
-        salary?.ref_ext ||
-        salary?.label ||
-        salary?.id ||
-        '-',
-    )
+    return toText(salary?.ref || salary?.ref_salary || salary?.ref_ext || salary?.label || salary?.id, '-')
   },
 
 getSalaryStartDate: (salary) => {
@@ -399,22 +555,11 @@ getSalaryEndDate: (salary) => {
       const salaryIds = Object.keys(payment.amounts)
 
       if (salaryIds.length === 1) {
-        return Number(salaryIds[0])
+        return toNumber(salaryIds[0])
       }
     }
 
-    return Number(
-      payment?.fk_salary ||
-        payment?.salary_id ||
-        payment?.fk_salarydet ||
-        payment?.salaryid ||
-        payment?.chid ||
-        payment?.fk_salary_payment ||
-        payment?.fk_salary_paiement ||
-        payment?.fk_object ||
-        payment?.id_salary ||
-        0,
-    )
+    return toNumber(payment?.fk_salary || payment?.salary_id || payment?.fk_salarydet || payment?.salaryid || payment?.chid || payment?.fk_salary_payment || payment?.fk_salary_paiement || payment?.fk_object || payment?.id_salary)
   },
 
   formatDate: (dateValue) => {
@@ -451,13 +596,10 @@ formatSalaryPeriod: (startDate, endDate) => {
 },
 
   getEmployeeSalariesWithPayments: async (employeeId) => {
-    const [salaries, payments] = await Promise.all([
-      SalaryService.getSalaries(),
-      SalaryService.getSalaryPayments(),
-    ])
+    const [salaries, payments] = await Promise.all([SalaryService.getSalaries(), SalaryService.getSalaryPayments()])
 
     const employeeSalaries = salaries.filter((salary) => {
-      return SalaryService.getSalaryUserId(salary) === Number(employeeId)
+      return SalaryService.getSalaryUserId(salary) === toNumber(employeeId)
     })
 
     return employeeSalaries.map((salary) => {
@@ -489,7 +631,7 @@ formatSalaryPeriod: (startDate, endDate) => {
   
 
   getPaymentAmount: (payment) => {
-    return Number(payment?.amount || payment?.total || payment?.payment_amount || 0)
+    return toNumber(payment?.amount || payment?.total || payment?.payment_amount)
   },
 
   getPaymentAmountForSalary: (payment, salaryId) => {
@@ -498,7 +640,7 @@ formatSalaryPeriod: (startDate, endDate) => {
       typeof payment.amounts === 'object' &&
       !Array.isArray(payment.amounts)
     ) {
-      const amount = Number(payment.amounts[salaryId] || payment.amounts[String(salaryId)] || 0)
+      const amount = toNumber(payment.amounts[salaryId] || payment.amounts[toText(salaryId)])
 
       if (amount > 0) {
         return amount
@@ -581,20 +723,20 @@ formatSalaryPeriod: (startDate, endDate) => {
 
   getTotalPaid: (payments) => {
     return payments.reduce((total, payment) => {
-      return total + Number(payment.amount || 0)
+      return total + toNumber(payment.amount)
     }, 0)
   },
 
   getValidPayments: (payments) => {
     return payments.filter((payment) => {
-      return Number(payment.amount || 0) > 0
+      return toNumber(payment.amount) > 0
     })
   },
 
   validateSalaryPayment: (salary, payments) => {
     const validPayments = SalaryService.getValidPayments(payments)
     const totalPaid = SalaryService.getTotalPaid(validPayments)
-    const salaryAmount = Number(salary.amount || 0)
+    const salaryAmount = toNumber(salary.amount)
 
     if (!salary.fk_user) {
       throw new Error('Veuillez choisir un salarié.')
@@ -638,7 +780,7 @@ formatSalaryPeriod: (startDate, endDate) => {
   validateExistingSalaryPayment: (salaryHistory, payments) => {
     const validPayments = SalaryService.getValidPayments(payments)
     const totalPaid = SalaryService.getTotalPaid(validPayments)
-    const remainingAmount = Number(salaryHistory?.remaining || 0)
+    const remainingAmount = toNumber(salaryHistory?.remaining)
 
     if (!salaryHistory?.salaryId) {
       throw new Error('Veuillez choisir un salaire existant.')
@@ -688,7 +830,7 @@ formatSalaryPeriod: (startDate, endDate) => {
       throw new Error('La date de début ne doit pas dépasser la date de fin.')
     }
 
-    if (!amount || Number(amount) <= 0) {
+    if (!amount || toNumber(amount) <= 0) {
       throw new Error('Veuillez saisir un montant valide.')
     }
   },
@@ -703,9 +845,9 @@ formatSalaryPeriod: (startDate, endDate) => {
 
   createSalary: async (salary) => {
     const payload = {
-      fk_user: Number(salary.fk_user),
+      fk_user: toNumber(salary.fk_user),
       label: salary.label,
-      amount: Number(salary.amount),
+      amount: toNumber(salary.amount),
       datesp: toTimestamp(salary.datesp),
       dateep: toTimestamp(salary.dateep),
     }
@@ -717,8 +859,8 @@ formatSalaryPeriod: (startDate, endDate) => {
 
   paySalary: async (salaryId, payment) => {
     const payload = {
-      chid: Number(salaryId),
-      fk_salary: Number(salaryId),
+      chid: toNumber(salaryId),
+      fk_salary: toNumber(salaryId),
       datepaye: toTimestamp(payment.datepaye),
       paiementtype: CASH_PAYMENT_TYPE_ID,
       fk_typepayment: CASH_PAYMENT_TYPE_ID,
@@ -728,7 +870,7 @@ formatSalaryPeriod: (startDate, endDate) => {
       fk_account: CASH_ACCOUNT_ID,
       num_payment: payment.num_payment || 'ESPECE',
       amounts: {
-        [salaryId]: Number(payment.amount),
+        [salaryId]: toNumber(payment.amount),
       },
     }
 
@@ -769,12 +911,7 @@ formatSalaryPeriod: (startDate, endDate) => {
   },
 
   generateSalariesForEmployees: async ({ employees, datesp, dateep, amount }) => {
-    SalaryService.validateSalaryGeneration({
-      employees,
-      datesp,
-      dateep,
-      amount,
-    })
+    SalaryService.validateSalaryGeneration({ employees, datesp, dateep, amount })
 
     const result = {
       created: [],
@@ -786,13 +923,7 @@ formatSalaryPeriod: (startDate, endDate) => {
       const employeeName = EmployeeService.getEmployeeName(employee) || `Employé ${employeeId}`
 
       try {
-        const salaryId = await SalaryService.createSalary({
-          fk_user: employeeId,
-          label: `Salaire ${employeeName}`,
-          amount: Number(amount),
-          datesp,
-          dateep,
-        })
+        const salaryId = await SalaryService.createSalary({ fk_user: employeeId, label: `Salaire ${employeeName}`, amount: toNumber(amount), datesp, dateep })
 
         result.created.push({
           employeeId,
@@ -809,112 +940,31 @@ formatSalaryPeriod: (startDate, endDate) => {
   },
 
   validateMonthlySalaryGeneration: ({ employees, month, year, dailySalary, holidayPercent, includeSaturday, includeSunday, weekendPercent }) => {
-    const monthNumber = Number(month)
-    const yearNumber = Number(year)
-    const dailySalaryNumber = Number(dailySalary)
-    const holidayPercentNumber = Number(holidayPercent || 0)
-    const weekendPercentNumber = Number(weekendPercent || 0)
+    validateEmployees(employees)
+    validateMonthYear(month, year)
+    validatePositiveNumber(dailySalary, 'Veuillez saisir un salaire par jour valide.')
+    validateNotNegativeNumber(holidayPercent, 'Le pourcentage de majoration ne doit pas être négatif.')
 
-    if (!employees.length) {
-      throw new Error('Aucun employé ne correspond au filtre.')
-    }
-
-    if (!monthNumber || monthNumber < 1 || monthNumber > 12) {
-      throw new Error('Veuillez choisir un mois valide.')
-    }
-
-    if (!yearNumber || yearNumber < 2000) {
-      throw new Error('Veuillez saisir une année valide.')
-    }
-
-    if (!dailySalaryNumber || dailySalaryNumber <= 0) {
-      throw new Error('Veuillez saisir un salaire par jour valide.')
-    }
-
-    if (holidayPercentNumber < 0) {
-      throw new Error('Le pourcentage de majoration ne doit pas être négatif.')
-    }
-
-    if ((includeSaturday || includeSunday) && weekendPercentNumber < 0) {
-      throw new Error('Le pourcentage de majoration weekend ne doit pas être négatif.')
+    if (includeSaturday || includeSunday) {
+      validateNotNegativeNumber(weekendPercent, 'Le pourcentage de majoration weekend ne doit pas être négatif.')
     }
   },
 
-  generateMonthlySalariesForEmployees: async ({
-    employees,
-    month,
-    year,
-    dailySalary,
-    holidayPercent,
-    holidays,
-    weekendPercent, 
-    includeSaturday,
-    includeSunday,
-  }) => {
-    SalaryService.validateMonthlySalaryGeneration({
-      employees,
-      month,
-      year,
-      dailySalary,
-      holidayPercent,
-      weekendPercent,   
-      includeSaturday,
-      includeSunday,
-    })
+  generateMonthlySalariesForEmployees: async ({ employees, month, year, dailySalary, holidayPercent, holidays, weekendPercent, includeSaturday, includeSunday }) => {
+    SalaryService.validateMonthlySalaryGeneration({ employees, month, year, dailySalary, holidayPercent, weekendPercent, includeSaturday, includeSunday })
 
-    const monthNumber = Number(month)
-    const yearNumber = Number(year)
-    const dailySalaryNumber = Number(dailySalary)
-    const holidayPercentNumber = Number(holidayPercent || 0)
-    const weekendPercentNumber = Number(weekendPercent || 0)
-    const includeSaturdayBoolean = Boolean(includeSaturday)
-    const includeSundayBoolean = Boolean(includeSunday)
-
-    const monthStartDate = getMonthStartDate(monthNumber, yearNumber)
-    const monthEndDate = getMonthEndDate(monthNumber, yearNumber)
-    const monthDays = getMonthDays(monthNumber, yearNumber)
-
-    const monthHolidays = holidays.filter((holiday) => {
-      return holiday.date >= monthStartDate && holiday.date <= monthEndDate
-    })
-
-    const holidayDates = new Set(monthHolidays.map((holiday) => holiday.date))
-
+    const context = getMonthlySalaryContext({ month, year, dailySalary, holidayPercent, holidays, weekendPercent, includeSaturday, includeSunday })
     const salaries = await SalaryService.getSalaries()
 
-    const result = {
-      created: [],
-      skipped: [],
-      errors: [],
-    }
+    const result = { created: [], skipped: [], errors: [] }
 
     for (const employee of employees) {
       const employeeId = EmployeeService.getEmployeeId(employee)
       const employeeName = EmployeeService.getEmployeeName(employee) || `Employé ${employeeId}`
 
       try {
-        const employeeSalaries = salaries.filter((salary) => {
-          return SalaryService.getSalaryUserId(salary) === employeeId
-        })
-
-        const existingIntervals = employeeSalaries
-          .map((salary) => {
-            return getDateOverlap(
-              SalaryService.getSalaryStartDate(salary),
-              SalaryService.getSalaryEndDate(salary),
-              monthStartDate,
-              monthEndDate,
-            )
-          })
-          .filter(Boolean)
-
-        const daysToGenerate = monthDays.filter((day) => {
-          return !existingIntervals.some((interval) => {
-            return isDateInInterval(day, interval.startDate, interval.endDate)
-          })
-        })
-
-        const intervalsToGenerate = groupDatesIntoIntervals(daysToGenerate)
+        const existingIntervals = getEmployeeSalaryIntervals({ salaries, employeeId, monthStartDate: context.monthStartDate, monthEndDate: context.monthEndDate })
+        const intervalsToGenerate = getIntervalsToGenerate({ monthDays: context.monthDays, existingIntervals })
 
         if (!intervalsToGenerate.length) {
           result.skipped.push(`${employeeName} : tout le mois a déjà un salaire.`)
@@ -922,51 +972,7 @@ formatSalaryPeriod: (startDate, endDate) => {
         }
 
         for (const interval of intervalsToGenerate) {
-          // const daysCount = countDaysInInterval(interval.startDate, interval.endDate)
-
-          // const holidayCount = monthHolidays.filter((holiday) => {
-          //   return isDateInInterval(holiday.date, interval.startDate, interval.endDate)
-          // }).length
-
-          // const baseAmount = daysCount * dailySalaryNumber
-          // const holidayBonus = (holidayCount * dailySalaryNumber * holidayPercentNumber) / 100
-          // const amount = Math.round(baseAmount + holidayBonus)
-
-          const intervalDates = getDatesInInterval(interval.startDate, interval.endDate)
-          const daysCount = intervalDates.length
-
-          const salaryCalculation = calculateMonthlySalaryAmount({dates: intervalDates, dailySalary:dailySalaryNumber, holidayDates, holidayPercent: holidayPercentNumber, includeSaturday: includeSaturdayBoolean, includeSunday: includeSundayBoolean,weekendPercent: weekendPercentNumber})
-
-          const amount = salaryCalculation.amount
-          const holidayCount = salaryCalculation.holidayCount
-          const weekendCount = salaryCalculation.weekendCount
-          const saturdayCount = salaryCalculation.saturdayCount
-          const sundayCount = salaryCalculation.sundayCount
-          const holidayWeekendCount = salaryCalculation.holidayWeekendCount
-
-          const salaryId = await SalaryService.createSalary({
-            fk_user: employeeId,
-            label: `Salaire ${employeeName} - ${interval.startDate} au ${interval.endDate}`,
-            amount,
-            datesp: interval.startDate,
-            dateep: interval.endDate,
-          })
-
-          result.created.push({
-            employeeId,
-            employeeName,
-            salaryId,
-            startDate: interval.startDate,
-            endDate: interval.endDate,
-            daysCount,
-            holidayCount,
-            weekendCount,
-            saturdayCount,
-            sundayCount,
-            holidayWeekendCount,
-            amount,
-            message: `${employeeName} : salaire généré du ${interval.startDate} au ${interval.endDate} (${amount.toLocaleString()} Ar).`,
-          })
+          result.created.push(await createMonthlySalaryForInterval({ employeeId, employeeName, interval, context }))
         }
       } catch (error) {
         result.errors.push(`${employeeName} : ${error.message}`)
@@ -977,201 +983,61 @@ formatSalaryPeriod: (startDate, endDate) => {
   },
 
   validateSalaryPaymentGeneration: ({ employees, month, year, amount, priorityPoste }) => {
-    const monthNumber = Number(month)
-    const yearNumber = Number(year)
-    const amountNumber = Number(amount)
-
-    if (!employees.length) {
-      throw new Error('Aucun employé ne correspond au filtre.')
-    }
-
-    if (!monthNumber || monthNumber < 1 || monthNumber > 12) {
-      throw new Error('Veuillez choisir un mois valide.')
-    }
-
-    if (!yearNumber || yearNumber < 2000) {
-      throw new Error('Veuillez saisir une année valide.')
-    }
+    validateEmployees(employees)
+    validateMonthYear(month, year)
 
     if (!priorityPoste) {
       throw new Error('Veuillez choisir le poste prioritaire.')
     }
 
-    if (!amountNumber || amountNumber <= 0) {
-      throw new Error('Veuillez saisir un montant de paiement valide.')
-    }
+    validatePositiveNumber(amount, 'Veuillez saisir un montant de paiement valide.')
   },
 
   getSalariesToPayByOrder: async ({ employees, month, year, priorityPoste }) => {
-    const monthNumber = Number(month)
-    const yearNumber = Number(year)
-    const priority = String(priorityPoste || '').toLowerCase()
+    const monthNumber = toNumber(month)
+    const yearNumber = toNumber(year)
+    const priority = toText(priorityPoste).toLowerCase()
     const monthStartDate = getMonthStartDate(monthNumber, yearNumber)
     const monthEndDate = getMonthEndDate(monthNumber, yearNumber)
 
-    const employeeById = new Map()
-
-    employees.forEach((employee) => {
-      const employeeId = EmployeeService.getEmployeeId(employee)
-
-      if (employeeId) {
-        employeeById.set(employeeId, employee)
-      }
-    })
-
-    const [salaries, payments] = await Promise.all([
-      SalaryService.getSalaries(),
-      SalaryService.getSalaryPayments(),
-    ])
-
-    const paidBySalaryId = new Map()
-
-    payments.forEach((payment) => {
-      if (
-        payment?.amounts &&
-        typeof payment.amounts === 'object' &&
-        !Array.isArray(payment.amounts)
-      ) {
-        Object.entries(payment.amounts).forEach(([salaryId, amount]) => {
-          const id = Number(salaryId)
-          const paid = Number(amount || 0)
-
-          if (id && paid > 0) {
-            paidBySalaryId.set(id, (paidBySalaryId.get(id) || 0) + paid)
-          }
-        })
-
-        return
-      }
-
-      const salaryId = SalaryService.getPaymentSalaryId(payment)
-      const paid = SalaryService.getPaymentAmount(payment)
-
-      if (salaryId && paid > 0) {
-        paidBySalaryId.set(salaryId, (paidBySalaryId.get(salaryId) || 0) + paid)
-      }
-    })
+    const employeeById = buildEmployeeById(employees)
+    const [salaries, payments] = await Promise.all([SalaryService.getSalaries(), SalaryService.getSalaryPayments()])
+    const paidBySalaryId = buildPaidBySalaryId(payments)
 
     const salariesToPay = salaries
-      .map((salary) => {
-        const salaryId = SalaryService.getSalaryId(salary)
-        const employeeId = SalaryService.getSalaryUserId(salary)
-        const employee = employeeById.get(employeeId)
-        const startDate = toDateValue(SalaryService.getSalaryStartDate(salary))
-        const endDate = toDateValue(SalaryService.getSalaryEndDate(salary))
-        const amount = SalaryService.getSalaryAmount(salary)
-        const totalPaid = paidBySalaryId.get(salaryId) || 0
-        const remaining = amount - totalPaid
-        const poste = EmployeeService.getEmployeePoste(employee || {})
+      .map((salary) => buildSalaryToPayItem({ salary, employeeById, paidBySalaryId, priority }))
+      .filter((item) => isPayableSalaryInMonth({ item, monthStartDate, monthEndDate }))
 
-        return {
-          salary,
-          salaryId,
-          employeeId,
-          employee,
-          employeeName: EmployeeService.getEmployeeName(employee || {}) || `Employé ${employeeId}`,
-          poste,
-          startDate,
-          endDate,
-          amount,
-          totalPaid,
-          remaining,
-          isPriority: String(poste || '').toLowerCase() === priority,
-        }
-      })
-      .filter((item) => {
-        return (
-          item.salaryId &&
-          item.employee &&
-          item.startDate &&
-          item.startDate >= monthStartDate &&
-          item.startDate <= monthEndDate &&
-          item.remaining > 0
-        )
-      })
-
-    return salariesToPay.sort((a, b) => {
-      if (a.isPriority !== b.isPriority) {
-        return a.isPriority ? -1 : 1
-      }
-
-      if (a.startDate !== b.startDate) {
-        return a.startDate.localeCompare(b.startDate)
-      }
-
-      return a.employeeName.localeCompare(b.employeeName)
-    })
+    return salariesToPay.sort(sortSalaryToPayItems)
   },
 
   generatePaymentsByOrder: async ({ employees, month, year, priorityPoste, amount }) => {
-    SalaryService.validateSalaryPaymentGeneration({
-      employees,
-      month,
-      year,
-      amount,
-      priorityPoste,
-    })
+    SalaryService.validateSalaryPaymentGeneration({ employees, month, year, amount, priorityPoste })
 
-    const salariesToPay = await SalaryService.getSalariesToPayByOrder({
-      employees,
-      month,
-      year,
-      priorityPoste,
-    })
+    const salariesToPay = await SalaryService.getSalariesToPayByOrder({ employees, month, year, priorityPoste })
 
     if (!salariesToPay.length) {
       throw new Error('Aucun salaire avec reste à payer pour ce mois et ces filtres.')
     }
 
-    let remainingBudget = Number(amount)
-
-    const result = {
-      budget: Number(amount),
-      totalPaid: 0,
-      remainingBudget: Number(amount),
-      paid: [],
-      skipped: [],
-      errors: [],
-    }
-
-    const today = new Date()
-    const paymentDate = buildDateValue(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      today.getDate(),
-    )
+    let remainingBudget = toNumber(amount)
+    const result = createPaymentResult(amount)
+    const paymentDate = getTodayDateValue()
 
     for (const item of salariesToPay) {
       if (remainingBudget <= 0) {
-        result.skipped.push(
-          `${item.employeeName} : budget terminé, salaire non payé.`,
-        )
+        result.skipped.push(`${item.employeeName} : budget terminé, salaire non payé.`)
         continue
       }
 
       const amountToPay = Math.min(item.remaining, remainingBudget)
 
       try {
-        await SalaryService.paySalary(item.salaryId, {
-          amount: amountToPay,
-          datepaye: paymentDate,
-          num_payment: 'ESPECE',
-        })
+        const paidItem = await paySalaryItem({ item, amountToPay, paymentDate })
 
         remainingBudget -= amountToPay
         result.totalPaid += amountToPay
-
-        result.paid.push({
-          salaryId: item.salaryId,
-          employeeId: item.employeeId,
-          employeeName: item.employeeName,
-          poste: item.poste,
-          startDate: item.startDate,
-          endDate: item.endDate,
-          amountPaid: amountToPay,
-          remainingBeforePayment: item.remaining,
-          isPartial: amountToPay < item.remaining,
-        })
+        result.paid.push(paidItem)
       } catch (error) {
         result.errors.push(`${item.employeeName} : ${error.message}`)
       }
