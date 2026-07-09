@@ -19,9 +19,6 @@ const initialGeneration = {
   year: String(currentDate.getFullYear()),
   dailySalary: '',
   holidayPercent: '0',
-  weekendPercent: '0',
-  includeSaturday: false,
-  includeSunday: false,
 }
 
 const months = [
@@ -142,9 +139,6 @@ function MonthlySalaryGenerationPage() {
         year: generation.year,
         dailySalary: generation.dailySalary,
         holidayPercent: generation.holidayPercent,
-        weekendPercent: generation.weekendPercent,
-        includeSaturday: generation.includeSaturday,
-        includeSunday: generation.includeSunday,
         holidays,
       })
 
@@ -279,47 +273,8 @@ function MonthlySalaryGenerationPage() {
               value={generation.holidayPercent}
               onChange={(event) => handleGenerationChange('holidayPercent', event.target.value)}
               placeholder="Ex : 50"
-            />          
+            />
           </div>
-  
-<div className="bulk-salary-form-group">
-  <label>
-    <input
-      type="checkbox"
-      checked={generation.includeSaturday}
-      onChange={(event) =>
-        handleGenerationChange('includeSaturday', event.target.checked)
-      }
-    />
-    Samedi
-  </label>
-
-  <label>
-    <input
-      type="checkbox"
-      checked={generation.includeSunday}
-      onChange={(event) =>
-        handleGenerationChange('includeSunday', event.target.checked)
-      }
-    />
-    Dimanche
-  </label>
-
-  {(generation.includeSaturday || generation.includeSunday) && (
-    <>
-      <label>Majoration weekend (%)</label>
-      <input
-        type="number"
-        min="0"
-        value={generation.weekendPercent}
-        onChange={(event) =>
-          handleGenerationChange('weekendPercent', event.target.value)
-        }
-        placeholder="Ex : 50"
-      />
-    </>
-  )}
-</div>
         </div>
 
         <div className="bulk-salary-summary">

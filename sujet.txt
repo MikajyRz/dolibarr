@@ -12,21 +12,10 @@ Ex: (on genere les salaires des intervalles exclus)
 
 intervalle ligne1: historique
 
-22 aout => 31 aout
 
 
 
-27
-540
-
-4*20= 
-
-12*20=240
-4*20=80
-
-19*20   380
-4*10    40   420
-440
-20
 
 
+
+    

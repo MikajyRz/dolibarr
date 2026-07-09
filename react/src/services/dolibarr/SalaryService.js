@@ -136,33 +136,6 @@ const isDateInInterval = (dateValue, startDate, endDate) => {
   return dateValue >= startDate && dateValue <= endDate
 }
 
-//6
-const getDayOfWeek = (dateValue) => {
-  const date = new Date(`${dateValue}T00:00:00`)
-  return date.getDay()
-}
-
-const isSaturdayDate = (dateValue) => {
-  return getDayOfWeek(dateValue) === 6
-}
-
-const isSundayDate = (dateValue) => {
-  return getDayOfWeek(dateValue) === 0
-}
-
-//7
-const getDatesInInterval = (startDate, endDate) => {
-  const dates = []
-  let currentDate = startDate
-
-  while (currentDate <= endDate) {
-    dates.push(currentDate)
-    currentDate = addDaysToDateValue(currentDate, 1)
-  }
-
-  return dates
-}
-
 const countDaysInInterval = (startDate, endDate) => {
   let count = 0
   let currentDate = startDate
@@ -239,65 +212,6 @@ const groupDatesIntoIntervals = (dates) => {
   intervals.push({ startDate, endDate })
 
   return intervals
-}
-
-//1
-const calculateMonthlySalaryAmount = ({
-  dates,
-  dailySalary,
-  holidayDates,
-  holidayPercent,
-  includeSaturday,
-  includeSunday,
-  weekendPercent,
-}) => {
-  let amount = 0
-  let holidayCount = 0
-  let saturdayCount = 0
-  let sundayCount = 0
-  let weekendCount = 0
-  let holidayWeekendCount = 0
-
-  dates.forEach((dateValue) => {
-    const isHolidayDay = holidayDates.has(dateValue)
-    const isSaturdayDay = includeSaturday && isSaturdayDate(dateValue)
-    const isSundayDay = includeSunday && isSundayDate(dateValue)
-    const isWeekendDay = isSaturdayDay || isSundayDay
-
-    let percent = 0
-
-    if (isHolidayDay) {
-      percent = holidayPercent
-      holidayCount += 1
-    }
-
-    if (isSaturdayDay) {
-      percent = Math.max(percent, weekendPercent)
-      saturdayCount += 1
-      weekendCount += 1
-    }
-
-    if (isSundayDay) {
-      percent = Math.max(percent, weekendPercent)
-      sundayCount += 1
-      weekendCount += 1
-    }
-
-    if (isHolidayDay && isWeekendDay) {
-      holidayWeekendCount += 1
-    }
-
-    amount += dailySalary + (dailySalary * percent) / 100
-  })
-
-  return {
-    amount: Math.round(amount),
-    holidayCount,
-    saturdayCount,
-    sundayCount,
-    weekendCount,
-    holidayWeekendCount,
-  }
 }
 
 export const SalaryService = {
@@ -808,12 +722,11 @@ formatSalaryPeriod: (startDate, endDate) => {
     return result
   },
 
-  validateMonthlySalaryGeneration: ({ employees, month, year, dailySalary, holidayPercent, includeSaturday, includeSunday, weekendPercent }) => {
+  validateMonthlySalaryGeneration: ({ employees, month, year, dailySalary, holidayPercent }) => {
     const monthNumber = Number(month)
     const yearNumber = Number(year)
     const dailySalaryNumber = Number(dailySalary)
     const holidayPercentNumber = Number(holidayPercent || 0)
-    const weekendPercentNumber = Number(weekendPercent || 0)
 
     if (!employees.length) {
       throw new Error('Aucun employé ne correspond au filtre.')
@@ -834,10 +747,6 @@ formatSalaryPeriod: (startDate, endDate) => {
     if (holidayPercentNumber < 0) {
       throw new Error('Le pourcentage de majoration ne doit pas être négatif.')
     }
-
-    if ((includeSaturday || includeSunday) && weekendPercentNumber < 0) {
-      throw new Error('Le pourcentage de majoration weekend ne doit pas être négatif.')
-    }
   },
 
   generateMonthlySalariesForEmployees: async ({
@@ -847,9 +756,6 @@ formatSalaryPeriod: (startDate, endDate) => {
     dailySalary,
     holidayPercent,
     holidays,
-    weekendPercent, 
-    includeSaturday,
-    includeSunday,
   }) => {
     SalaryService.validateMonthlySalaryGeneration({
       employees,
@@ -857,18 +763,12 @@ formatSalaryPeriod: (startDate, endDate) => {
       year,
       dailySalary,
       holidayPercent,
-      weekendPercent,   
-      includeSaturday,
-      includeSunday,
     })
 
     const monthNumber = Number(month)
     const yearNumber = Number(year)
     const dailySalaryNumber = Number(dailySalary)
     const holidayPercentNumber = Number(holidayPercent || 0)
-    const weekendPercentNumber = Number(weekendPercent || 0)
-    const includeSaturdayBoolean = Boolean(includeSaturday)
-    const includeSundayBoolean = Boolean(includeSunday)
 
     const monthStartDate = getMonthStartDate(monthNumber, yearNumber)
     const monthEndDate = getMonthEndDate(monthNumber, yearNumber)
@@ -877,8 +777,6 @@ formatSalaryPeriod: (startDate, endDate) => {
     const monthHolidays = holidays.filter((holiday) => {
       return holiday.date >= monthStartDate && holiday.date <= monthEndDate
     })
-
-    const holidayDates = new Set(monthHolidays.map((holiday) => holiday.date))
 
     const salaries = await SalaryService.getSalaries()
 
@@ -922,27 +820,15 @@ formatSalaryPeriod: (startDate, endDate) => {
         }
 
         for (const interval of intervalsToGenerate) {
-          // const daysCount = countDaysInInterval(interval.startDate, interval.endDate)
+          const daysCount = countDaysInInterval(interval.startDate, interval.endDate)
 
-          // const holidayCount = monthHolidays.filter((holiday) => {
-          //   return isDateInInterval(holiday.date, interval.startDate, interval.endDate)
-          // }).length
+          const holidayCount = monthHolidays.filter((holiday) => {
+            return isDateInInterval(holiday.date, interval.startDate, interval.endDate)
+          }).length
 
-          // const baseAmount = daysCount * dailySalaryNumber
-          // const holidayBonus = (holidayCount * dailySalaryNumber * holidayPercentNumber) / 100
-          // const amount = Math.round(baseAmount + holidayBonus)
-
-          const intervalDates = getDatesInInterval(interval.startDate, interval.endDate)
-          const daysCount = intervalDates.length
-
-          const salaryCalculation = calculateMonthlySalaryAmount({dates: intervalDates, dailySalary:dailySalaryNumber, holidayDates, holidayPercent: holidayPercentNumber, includeSaturday: includeSaturdayBoolean, includeSunday: includeSundayBoolean,weekendPercent: weekendPercentNumber})
-
-          const amount = salaryCalculation.amount
-          const holidayCount = salaryCalculation.holidayCount
-          const weekendCount = salaryCalculation.weekendCount
-          const saturdayCount = salaryCalculation.saturdayCount
-          const sundayCount = salaryCalculation.sundayCount
-          const holidayWeekendCount = salaryCalculation.holidayWeekendCount
+          const baseAmount = daysCount * dailySalaryNumber
+          const holidayBonus = (holidayCount * dailySalaryNumber * holidayPercentNumber) / 100
+          const amount = Math.round(baseAmount + holidayBonus)
 
           const salaryId = await SalaryService.createSalary({
             fk_user: employeeId,
@@ -960,10 +846,6 @@ formatSalaryPeriod: (startDate, endDate) => {
             endDate: interval.endDate,
             daysCount,
             holidayCount,
-            weekendCount,
-            saturdayCount,
-            sundayCount,
-            holidayWeekendCount,
             amount,
             message: `${employeeName} : salaire généré du ${interval.startDate} au ${interval.endDate} (${amount.toLocaleString()} Ar).`,
           })
