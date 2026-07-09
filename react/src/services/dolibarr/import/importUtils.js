@@ -3,28 +3,9 @@ export function cleanText(value) {
 }
 
 export function parseAmount(value) {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0
-  }
-
-  let cleaned = cleanText(value)
+  const cleaned = cleanText(value)
     .replace(/\s/g, '')
-
-  const hasComma = cleaned.includes(',')
-  const hasDot = cleaned.includes('.')
-
-  if (hasComma && hasDot) {
-    const lastCommaIndex = cleaned.lastIndexOf(',')
-    const lastDotIndex = cleaned.lastIndexOf('.')
-    const decimalSeparator = lastCommaIndex > lastDotIndex ? ',' : '.'
-    const thousandsSeparator = decimalSeparator === ',' ? '.' : ','
-
-    cleaned = cleaned
-      .replaceAll(thousandsSeparator, '')
-      .replace(decimalSeparator, '.')
-  } else if (hasComma) {
-    cleaned = cleaned.replace(',', '.')
-  }
+    .replace(',', '.')
 
   const number = Number(cleaned)
 

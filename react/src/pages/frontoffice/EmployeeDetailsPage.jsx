@@ -171,9 +171,8 @@ const EmployeeDetailsPage = () => {
                     <tr key={item.salaryId}>
                       <td>{item.ref}</td>
                       <td>
-                        {/* {SalaryService.formatDate(item.startDate)} au{' '}
-                        {SalaryService.formatDate(item.endDate)} */}
-                        {SalaryService.formatSalaryPeriod(item.startDate, item.endDate)}
+                        {SalaryService.formatDate(item.startDate)} au{' '}
+                        {SalaryService.formatDate(item.endDate)}
                       </td>
                       <td>{formatAmount(item.amount)}</td>
                       <td>{formatAmount(item.totalPaid)}</td>

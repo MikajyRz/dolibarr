@@ -1,7 +1,7 @@
 import Papa from 'papaparse'
 import { cleanText } from './importUtils'
 
-export function parseCsvFile(file, options = {}) {
+export function parseCsvFile(file) {
   return new Promise((resolve, reject) => {
     if (!file) {
       resolve([])
@@ -13,12 +13,8 @@ export function parseCsvFile(file, options = {}) {
       skipEmptyLines: true,
       transformHeader: (header) => cleanText(header),
       complete: (result) => {
-        const blockingErrors = (result.errors || []).filter((error) => {
-          return options.allowFieldMismatch !== true || error.type !== 'FieldMismatch'
-        })
-
-        if (blockingErrors.length > 0) {
-          reject(new Error(blockingErrors[0].message))
+        if (result.errors?.length > 0) {
+          reject(new Error(result.errors[0].message))
           return
         }
 
