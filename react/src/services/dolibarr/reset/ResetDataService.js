@@ -1,5 +1,4 @@
 import { dolibarrClient } from '../dolibarrClient'
-import { backendClient } from '../../backend/backendClient'
 
 function getId(item) {
   return Number(item?.id || item?.rowid || item?.pid || item?.fk_payment || 0)
@@ -264,45 +263,16 @@ function buildSummary(result) {
     usersDeleted: countByStatus(result.users, 'deleted'),
     usersKept: countByStatus(result.users, 'kept'),
     usersErrors: countByStatus(result.users, 'error'),
-
-    sqliteTotalDeleted: result.sqlite?.totalDeleted || 0,
-    sqliteTables: result.sqlite?.tables || [],
-  }
-}
-
-async function getSqlitePreview() {
-  try {
-    return await backendClient.get('/reset-sqlite/preview')
-  } catch (error) {
-    return {
-      total: 0,
-      tables: [],
-      error: error.message,
-    }
-  }
-}
-
-async function resetSqliteTables() {
-  try {
-    return await backendClient.delete('/reset-sqlite')
-  } catch (error) {
-    return {
-      totalDeleted: 0,
-      tables: [],
-      error: error.message,
-    }
   }
 }
 
 export const ResetDataService = {
   preview: async () => {
-    const [users, salaries, payments, sqlitePreview] = await Promise.all([
+    const [users, salaries, payments] = await Promise.all([
       getAllUsers(),
       getAllSalaries(),
       getAllSalaryPayments(),
-      getSqlitePreview(),
     ])
-
     const deletableUsers = users.filter((user) => getId(user) !== 1)
 
     return {
@@ -310,7 +280,6 @@ export const ResetDataService = {
       salariesCount: salaries.length,
       deletableUsersCount: deletableUsers.length,
       keptUsersCount: users.length - deletableUsers.length,
-      sqlitePreview,
     }
   },
 
@@ -320,7 +289,6 @@ export const ResetDataService = {
       salaries: [],
       photos: [],
       users: [],
-      sqlite: null,
       errors: [],
       summary: {},
     }
@@ -358,9 +326,6 @@ export const ResetDataService = {
 
       onProgress?.(`Suppression utilisateur ${index + 1}/${users.length} : ${userId}`)
       result.users.push(await deleteUser(users[index]))
-
-      onProgress?.('Réinitialisation des tables SQLite...')
-      result.sqlite = await resetSqliteTables()
     }
 
     result.summary = buildSummary(result)
