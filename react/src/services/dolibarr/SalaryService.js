@@ -235,6 +235,7 @@ const getDateOverlap = (startDateValue, endDateValue, limitStartDate, limitEndDa
   }
 }
 
+// Transformer en intervalles continus
 const groupDatesIntoIntervals = (dates) => {
   if (!dates.length) {
     return []
@@ -312,7 +313,7 @@ const calculateMonthlySalaryAmount = ({ dates, dailySalary, holidayDates, holida
     holidayWeekendCount,
   }
 }
-
+// Prepare info du mois
 const getMonthlySalaryContext = ({ month, year, dailySalary, holidayPercent, holidays, weekendPercent, includeSaturday, includeSunday }) => {
   const monthNumber = toNumber(month)
   const yearNumber = toNumber(year)
@@ -332,7 +333,7 @@ const getMonthlySalaryContext = ({ month, year, dailySalary, holidayPercent, hol
     holidayDates: new Set(monthHolidays.map((holiday) => holiday.date)),
   }
 }
-
+// cherche periode existant
 const getEmployeeSalaryIntervals = ({ salaries, employeeId, monthStartDate, monthEndDate }) => {
   return salaries
     .filter((salary) => SalaryService.getSalaryUserId(salary) === employeeId)
@@ -340,6 +341,7 @@ const getEmployeeSalaryIntervals = ({ salaries, employeeId, monthStartDate, mont
     .filter(Boolean)
 }
 
+// Garde jours qui ne sont pas dans les periodes existantes(trouve les jours qui manque)
 const getIntervalsToGenerate = ({ monthDays, existingIntervals }) => {
   const daysToGenerate = monthDays.filter((day) => {
     return !existingIntervals.some((interval) => isDateInInterval(day, interval.startDate, interval.endDate))
