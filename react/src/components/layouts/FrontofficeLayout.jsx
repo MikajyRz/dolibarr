@@ -13,7 +13,6 @@ const FrontofficeLayout = () => {
           <Link to="/frontoffice/salaries/create">Créer un salaire</Link>
           <Link to="/frontoffice/salaries/bulk-create">Générer plusieurs salaires</Link>
           <Link to="/frontoffice/salaries/bulk-create-month">Générer salaires alea</Link>
-          <Link to="/frontoffice/salaries/generate-month">Paiement salaires alea</Link>
         </nav>
       </aside>
 

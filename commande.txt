@@ -1,4 +1,4 @@
 Get-ChildItem C:\Users\Mikajy\Documents\GitHub\dolibarr -Recurse -File |
-Where-Object {$_.LastWriteTime -gt (Get-Date).AddMinutes(-90)} |
+Where-Object {$_.LastWriteTime -gt (Get-Date).AddMinutes(-30)} |
 Sort-Object LastWriteTime -Descending |
 Select-Object LastWriteTime, FullName
