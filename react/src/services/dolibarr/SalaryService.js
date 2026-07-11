@@ -273,6 +273,13 @@ const calculateMonthlySalaryAmount = ({ dates, dailySalary, holidayDates, holida
   let holidayWeekendCount = 0
 
   dates.forEach((dateValue) => {
+    // const isAbsentDay = absenceDates.has(dateValue)
+
+    // if (isAbsentDay) {
+        // absenceCount += 1
+        // return
+    // }
+  
     const isHolidayDay = holidayDates.has(dateValue)
     const isSaturdayDay = includeSaturday && isSaturdayDate(dateValue)
     const isSundayDay = includeSunday && isSundayDate(dateValue)
@@ -664,6 +671,10 @@ formatSalaryPeriod: (startDate, endDate) => {
 
   getSalaryMonth: (salary) => {
     return getMonthKey(SalaryService.getSalaryStartDate(salary))
+  },
+
+  getMonthKeyFromDate: (dateValue) => {
+    return getMonthKey(dateValue)
   },
 
   getPaymentMonth: (payment) => {

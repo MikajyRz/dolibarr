@@ -60,6 +60,33 @@ function GenerateSalaryPaymentPage() {
     return [...new Set(values)].sort()
   }, [employees])
 
+const totalPaidByEmployee = useMemo(() => {
+  if (!result) {
+    return []
+  }
+
+  const totals = {}
+
+  result.paid.forEach((item) => {
+    if (!totals[item.employeeId]) {
+      totals[item.employeeId] = {
+        employeeId: item.employeeId,
+        employeeName: item.employeeName,
+        totalPaid: 0,
+        remainingToPay: 0,
+      }
+    }
+
+    totals[item.employeeId].totalPaid += Number(item.amountPaid || 0)
+
+    totals[item.employeeId].remainingToPay +=
+      Number(item.remainingBeforePayment || 0) -
+      Number(item.amountPaid || 0)
+  })
+
+  return Object.values(totals)
+}, [result])
+
   const handlePaymentChange = (field, value) => {
     setPayment((current) => ({
       ...current,
@@ -187,7 +214,7 @@ function GenerateSalaryPaymentPage() {
         </button>
       </section>
 
-      <section>
+      {/* <section>
         <h2>Employés concernés</h2>
 
         {loading ? (
@@ -217,7 +244,7 @@ function GenerateSalaryPaymentPage() {
             </tbody>
           </table>
         )}
-      </section>
+      </section> */}
 
       {result && (
         <section>
@@ -227,7 +254,33 @@ function GenerateSalaryPaymentPage() {
           <p>Total payé : {formatAmount(result.totalPaid)}</p>
           <p>Reste du budget : {formatAmount(result.remainingBudget)}</p>
 
-          {result.paid.length > 0 && (
+          {totalPaidByEmployee.length > 0 && (
+            <>
+              <h3>Total payé par employé</h3>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nom de l'employé</th>
+                    <th>Montant total payé</th>
+                    <th>Reste a payer</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {totalPaidByEmployee.map((employee) => (
+                    <tr key={employee.employeeId}>
+                      <td>{employee.employeeName}</td>
+                      <td>{formatAmount(employee.totalPaid)}</td>
+                      <td>{formatAmount(employee.remainingToPay)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+    
+          {/* {result.paid.length > 0 && (
             <table>
               <thead>
                 <tr>
@@ -266,7 +319,7 @@ function GenerateSalaryPaymentPage() {
                 ))}
               </ul>
             </div>
-          )}
+          )} */}
 
           {result.errors.length > 0 && (
             <div>

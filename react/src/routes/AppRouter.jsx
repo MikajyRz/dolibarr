@@ -16,6 +16,7 @@ import BulkSalaryGenerationPage from '../pages/frontoffice/BulkSalaryGenerationP
 import MonthlySalaryGenerationPage from '../pages/frontoffice/MonthlySalaryGenerationPage'
 import GenerateSalaryPage from '../pages/frontoffice/GenerateSalaryPage'
 import EmployeeDetailsPage from '../pages/frontoffice/EmployeeDetailsPage'
+import SalaryRemainingTablePage from '../pages/frontoffice/SalaryRemainingTablePage'
 
 import { backofficeAuthService } from '../services/backofficeAuthService'
 
@@ -40,6 +41,7 @@ function AppRouter() {
         <Route path="salaries/bulk-create" element={<BulkSalaryGenerationPage />} />
         <Route path="salaries/bulk-create-month" element={<MonthlySalaryGenerationPage />} />
         <Route path="salaries/generate-month" element={<GenerateSalaryPage />} />
+        <Route path="salaries/salary-remaining" element={<SalaryRemainingTablePage />} />
         <Route path="salaries/:id" element={<EmployeeDetailsPage />} />
       </Route>
 

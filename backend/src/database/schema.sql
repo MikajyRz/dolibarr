@@ -3,3 +3,5 @@ CREATE TABLE IF NOT EXISTS jours_feries (
     nom TEXT NOT NULL,
     date TEXT NOT NULL UNIQUE
 );
+
+

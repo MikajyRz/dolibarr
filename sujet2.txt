@@ -1,0 +1,10 @@
+Nouvelle page
+    tableau: Mois et annee(ligne) trie par mois, colonne: nom des employee: reste a payer sur le croisement
+    Lien sur le montant reste a payer: details pour les restes a payer(details et total salaire et details et total paiement)
+
+
+
+Test:280
+
+
+
